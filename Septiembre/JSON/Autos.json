@@ -1,0 +1,518 @@
+[
+ null,
+ {
+  "Column6": "**CAMPAÑA 2025-11"
+ },
+ {
+  "Column3": "21-10-2025 al 20-11-2025 - Plan 300 V032019",
+  "Column9": "Derecho de ingreso",
+  "Column11": "Cuota comercial del mes"
+ },
+ null,
+ {
+  "Column3": "Código",
+  "Column4": "Descripción",
+  "Column8": " Valor Nominal",
+  "Column9": "Suscripción",
+  "Column11": "Cuota 1 a 7",
+  "Column12": "Cuota 8 en adelante",
+  "Column13": "Derecho de Ingreso"
+ },
+ null,
+ {
+  "Column3": "Auto"
+ },
+ {
+  "Column3": "                  Chevrolet"
+ },
+ {
+  "Column3": 30041,
+  "Column4": "CHEVROLET ONIX PLUS 1.0 LT MT",
+  "Column8": 34400000,
+  "Column9": 168677.0976,
+  "Column11": 167914.2432,
+  "Column12": 113520,
+  "Column13": 549436.8
+ },
+ {
+  "Column3": 31606,
+  "Column4": "CHEVROLET SPIN PREMIER 7 PASAJEROS",
+  "Column8": 44900000,
+  "Column9": 220162.8396,
+  "Column11": 219167.1372,
+  "Column12": 148170,
+  "Column13": 717142.8
+ },
+ {
+  "Column3": 16461,
+  "Column4": "CHEVROLET TRACKER 1.2L TURBO LTZ AUT. NAFTA",
+  "Column8": 46400000,
+  "Column9": 227517.9456,
+  "Column11": 226488.9792,
+  "Column12": 153120,
+  "Column13": 741100.8
+ },
+ {
+  "Column3": "                  Citroen "
+ },
+ {
+  "Column3": 37799,
+  "Column4": "CITROEN C3 AIRCROSS VTI FEEL PACK",
+  "Column8": 42400000,
+  "Column9": 207904.3296,
+  "Column11": 206964.0672,
+  "Column12": 139920,
+  "Column13": 677212.8
+ },
+ {
+  "Column3": 30042,
+  "Column4": "CITROEN C3 VTI 115 FEEL PACK AUT.",
+  "Column8": 34900000,
+  "Column9": 171128.7996,
+  "Column11": 170354.8572,
+  "Column12": 115170,
+  "Column13": 557422.8
+ },
+ {
+  "Column3": "                  Coradir"
+ },
+ {
+  "Column3": 23642,
+  "Column4": "TITO S5 - 300",
+  "Column8": 40900000,
+  "Column9": 200549.2236,
+  "Column11": 199642.2252,
+  "Column12": 134970,
+  "Column13": 653254.8
+ },
+ {
+  "Column3": "                  Fiat "
+ },
+ {
+  "Column3": 31607,
+  "Column4": "FIAT CRONOS DRIVE 1.3L PACK PLUS",
+  "Column8": 39900000,
+  "Column9": 195645.8196,
+  "Column11": 194760.9972,
+  "Column12": 131670,
+  "Column13": 637282.8
+ },
+ {
+  "Column3": 15646,
+  "Column4": "FIAT CRONOS PRECISION 1.3  CVT  NAFTA (15646)",
+  "Column8": 41900000,
+  "Column9": 205452.6276,
+  "Column11": 204523.4532,
+  "Column12": 138270,
+  "Column13": 669226.8
+ },
+ {
+  "Column3": 29558,
+  "Column4": "FIAT MOBI TREKKING 1.0L",
+  "Column8": 29900000,
+  "Column9": 146611.7796,
+  "Column11": 145948.7172,
+  "Column12": 98670,
+  "Column13": 477562.80000000005
+ },
+ {
+  "Column3": 19075,
+  "Column4": "FIAT PULSE DRIVE CVT 1.3L NAFTA",
+  "Column8": 41700000,
+  "Column9": 204471.9468,
+  "Column11": 203547.2076,
+  "Column12": 137610,
+  "Column13": 666032.4
+ },
+ {
+  "Column3": "                  Ford "
+ },
+ {
+  "Column3": 29563,
+  "Column4": "FORD BRONCO SPORT BIG BEND 1.5L NAFTA",
+  "Column8": 64900000,
+  "Column9": 318230.9196,
+  "Column11": 316791.6972,
+  "Column12": 214170,
+  "Column13": 1036582.8
+ },
+ {
+  "Column3": "                  JEEP"
+ },
+ {
+  "Column3": 37800,
+  "Column4": "JEEP COMPASS LIMITED 1.3 4X2 NAFTA",
+  "Column8": 66900000,
+  "Column9": 328037.7276,
+  "Column11": 326554.1532,
+  "Column12": 220770,
+  "Column13": 1068526.8
+ },
+ {
+  "Column3": "                  NISSAN"
+ },
+ {
+  "Column3": 16462,
+  "Column4": "NISSAN KICKS ADVANCE 1.6L CVT NAFTA",
+  "Column8": 47400000,
+  "Column9": 232421.3496,
+  "Column11": 231370.2072,
+  "Column12": 156420,
+  "Column13": 757072.8
+ },
+ {
+  "Column3": 16464,
+  "Column4": "NISSAN VERSA ADVANCE 1.6L MT NAFTA",
+  "Column8": 41400000,
+  "Column9": 203000.9256,
+  "Column11": 202082.8392,
+  "Column12": 136620,
+  "Column13": 661240.8
+ },
+ {
+  "Column3": "                  Peugeot "
+ },
+ {
+  "Column3": 29557,
+  "Column4": "PEUGEOT 2008 GT T200 NAFTA",
+  "Column8": 53900000,
+  "Column9": 264293.4756,
+  "Column11": 263098.1892,
+  "Column12": 177870,
+  "Column13": 860890.8
+ },
+ {
+  "Column3": 15658,
+  "Column4": "PEUGEOT 208 ALLURE 1.6L  NAFTA (15658)",
+  "Column8": 38400000,
+  "Column9": 188290.7136,
+  "Column11": 187439.1552,
+  "Column12": 126720,
+  "Column13": 613324.8
+ },
+ {
+  "Column3": "                  Renault "
+ },
+ {
+  "Column3": 19073,
+  "Column4": "RENAULT DUSTER ICONIC CVT 1.3L  4x2 NAFTA",
+  "Column8": 46900000,
+  "Column9": 229969.6476,
+  "Column11": 228929.5932,
+  "Column12": 154770,
+  "Column13": 749086.8
+ },
+ {
+  "Column3": 34545,
+  "Column4": "RENAULT KWID ICONIC BITONO 1.0L",
+  "Column8": 28900000,
+  "Column9": 141708.3756,
+  "Column11": 141067.4892,
+  "Column12": 95370,
+  "Column13": 461590.80000000005
+ },
+ {
+  "Column3": 15665,
+  "Column4": "RENAULT LOGAN LIFE  1.6L NAFTA (15665)",
+  "Column8": 35900000,
+  "Column9": 176032.2036,
+  "Column11": 175236.0852,
+  "Column12": 118470,
+  "Column13": 573394.8
+ },
+ {
+  "Column3": 19067,
+  "Column4": "RENAULT SANDERO INTENS 1.6L NAFTA",
+  "Column8": 39700000,
+  "Column9": 194665.1388,
+  "Column11": 193784.7516,
+  "Column12": 131010,
+  "Column13": 634088.4
+ },
+ {
+  "Column3": "                  Toyota "
+ },
+ {
+  "Column3": 19066,
+  "Column4": "TOYOTA COROLLA CROSS 2.0L XLI CVT NAFTA",
+  "Column8": 48900000,
+  "Column9": 239776.4556,
+  "Column11": 238692.0492,
+  "Column12": 161370,
+  "Column13": 781030.8
+ },
+ {
+  "Column3": 15666,
+  "Column4": "TOYOTA COROLLA XLI CVT 2.0L (15666)",
+  "Column8": 42900000,
+  "Column9": 210356.0316,
+  "Column11": 209404.6812,
+  "Column12": 141570,
+  "Column13": 685198.8
+ },
+ {
+  "Column3": 16459,
+  "Column4": "TOYOTA SW4 SRX 2.8L TDI 6AT. 7A.",
+  "Column8": 86500000,
+  "Column9": 424144.446,
+  "Column11": 422226.222,
+  "Column12": 285450,
+  "Column13": 1381578
+ },
+ {
+  "Column3": 27565,
+  "Column4": "TOYOYA YARIS HATCHBACK  1.5 XLS CVT",
+  "Column8": 37900000,
+  "Column9": 185839.0116,
+  "Column11": 184998.5412,
+  "Column12": 125070,
+  "Column13": 605338.8
+ },
+ {
+  "Column3": "                  Volkswagen "
+ },
+ {
+  "Column3": 16465,
+  "Column4": "VW NIVUS HIGHLINE 200 TSI 1.0L NAFTA",
+  "Column8": 51700000,
+  "Column9": 253505.9868,
+  "Column11": 252359.4876,
+  "Column12": 170610,
+  "Column13": 825752.4
+ },
+ {
+  "Column3": 19068,
+  "Column4": "VW POLO MSI 5PTAS. 1.6L NAFTA",
+  "Column8": 37900000,
+  "Column9": 185839.0116,
+  "Column11": 184998.5412,
+  "Column12": 125070,
+  "Column13": 605338.8
+ },
+ {
+  "Column3": 16104,
+  "Column4": "VW T-CROSS CONFORTLINE MT",
+  "Column8": 54600000,
+  "Column9": 267725.8584,
+  "Column11": 266515.0488,
+  "Column12": 180180,
+  "Column13": 872071.2000000001
+ },
+ {
+  "Column3": 15672,
+  "Column4": "VW VENTO GLI 350 TSI",
+  "Column8": 73500000,
+  "Column9": 360400.194,
+  "Column11": 358770.258,
+  "Column12": 242550,
+  "Column13": 1173942
+ },
+ {
+  "Column3": 34547,
+  "Column4": "VW VIRTUS HIGHLINE 1.0L",
+  "Column8": 51900000,
+  "Column9": 254486.6676,
+  "Column11": 253335.7332,
+  "Column12": 171270,
+  "Column13": 828946.8
+ },
+ {
+  "Column3": "Camiones"
+ },
+ {
+  "Column3": "                  Ford "
+ },
+ {
+  "Column3": 29561,
+  "Column4": "FORD TRANSIT CHASIS 2.0L 4X2 MT",
+  "Column8": 77900000,
+  "Column9": 381975.1716,
+  "Column11": 380247.6612,
+  "Column12": 257070,
+  "Column13": 1244218.8
+ },
+ {
+  "Column3": "                  IVECO"
+ },
+ {
+  "Column3": 30040,
+  "Column4": "IVECO TECTOR ATTACK 150E21",
+  "Column8": 122900000,
+  "Column9": 602628.3516,
+  "Column11": 599902.9212,
+  "Column12": 405570,
+  "Column13": 1962958.8
+ },
+ {
+  "Column3": "Utilitarios"
+ },
+ {
+  "Column3": "                  Chevrolet"
+ },
+ {
+  "Column3": 34544,
+  "Column4": "CHEVROLET MONTANA 1.2T LTZ AT.",
+  "Column8": 45900000,
+  "Column9": 225066.2436,
+  "Column11": 224048.3652,
+  "Column12": 151470,
+  "Column13": 733114.8
+ },
+ {
+  "Column3": 15643,
+  "Column4": "CHEVROLET S-10 CD 4X2 2.8  (15643)",
+  "Column8": 51900000,
+  "Column9": 254486.6676,
+  "Column11": 253335.7332,
+  "Column12": 171270,
+  "Column13": 828946.8
+ },
+ {
+  "Column3": "                  Fiat "
+ },
+ {
+  "Column3": 30043,
+  "Column4": "FIAT STRADA FREEDOM CD 1.3 FIREFLY",
+  "Column8": 39900000,
+  "Column9": 195645.8196,
+  "Column11": 194760.9972,
+  "Column12": 131670,
+  "Column13": 637282.8
+ },
+ {
+  "Column3": 31608,
+  "Column4": "FIAT TORO FREEDOM CD 4X2 1.3L NAFTA",
+  "Column8": 50900000,
+  "Column9": 249583.2636,
+  "Column11": 248454.5052,
+  "Column12": 167970,
+  "Column13": 812974.8
+ },
+ {
+  "Column3": "                  Ford "
+ },
+ {
+  "Column3": 29564,
+  "Column4": "FORD MAVERICK XLT 2.0L NAFTA",
+  "Column8": 57500000,
+  "Column9": 281945.73,
+  "Column11": 280670.61,
+  "Column12": 189750,
+  "Column13": 918390.0000000001
+ },
+ {
+  "Column3": 15651,
+  "Column4": "FORD RANGER CD XL 4X2 2.0L DIESEL (15651)",
+  "Column8": 51900000,
+  "Column9": 254486.6676,
+  "Column11": 253335.7332,
+  "Column12": 171270,
+  "Column13": 828946.8
+ },
+ {
+  "Column3": "                  NISSAN"
+ },
+ {
+  "Column3": 16463,
+  "Column4": "NISSAN FRONTIER S 4X2 2.3L TDI DIESEL",
+  "Column8": 49900000,
+  "Column9": 244679.8596,
+  "Column11": 243573.2772,
+  "Column12": 164670,
+  "Column13": 797002.8
+ },
+ {
+  "Column3": "                  Peugeot "
+ },
+ {
+  "Column3": 15661,
+  "Column4": "PEUGEOT BOXER FURGON L3H2 HDI 2.2L (15661)",
+  "Column8": 75900000,
+  "Column9": 372168.3636,
+  "Column11": 370485.2052,
+  "Column12": 250470,
+  "Column13": 1212274.8
+ },
+ {
+  "Column3": "                  Renault "
+ },
+ {
+  "Column3": 16467,
+  "Column4": "RENAULT ALASKAN EMOTION 4X4 2.3L DIESEL",
+  "Column8": 61900000,
+  "Column9": 303520.7076,
+  "Column11": 302148.0132,
+  "Column12": 204270,
+  "Column13": 988666.8
+ },
+ {
+  "Column3": 15664,
+  "Column4": "RENAULT KANGOO EXPRESS FURGON CONFORT 1.5L DCI AA DA CD SVT 1PTA. (15664)",
+  "Column8": 43900000,
+  "Column9": 215259.4356,
+  "Column11": 214285.9092,
+  "Column12": 144870,
+  "Column13": 701170.8
+ },
+ {
+  "Column3": 16102,
+  "Column4": "RENAULT MASTER FURGON L1H1 2.3 DCI",
+  "Column8": 79900000,
+  "Column9": 391781.9796,
+  "Column11": 390010.1172,
+  "Column12": 263670,
+  "Column13": 1276162.8
+ },
+ {
+  "Column3": 19074,
+  "Column4": "RENAULT OROCH OUTSIDER 4X4 1.3L NAFTA",
+  "Column8": 49900000,
+  "Column9": 244679.8596,
+  "Column11": 243573.2772,
+  "Column12": 164670,
+  "Column13": 797002.8
+ },
+ {
+  "Column3": "                  Toyota "
+ },
+ {
+  "Column3": 15667,
+  "Column4": "TOYOTA HILUX 4X2 CD DX TDI 2.4L (15667)",
+  "Column8": 54900000,
+  "Column9": 269196.8796,
+  "Column11": 267979.4172,
+  "Column12": 181170,
+  "Column13": 876862.8
+ },
+ {
+  "Column3": "                  Volkswagen "
+ },
+ {
+  "Column3": 29560,
+  "Column4": "VW AMAROK HIGHLINE  V6 3.0 TDI AUT.",
+  "Column8": 88900000,
+  "Column9": 435912.6156,
+  "Column11": 433941.1692,
+  "Column12": 293370,
+  "Column13": 1419910.8
+ },
+ {
+  "Column3": 28006,
+  "Column4": "VW SAVEIRO CONFORTLINE 1.6 MSI MT",
+  "Column8": 43900000,
+  "Column9": 215259.4356,
+  "Column11": 214285.9092,
+  "Column12": 144870,
+  "Column13": 701170.8
+ },
+ null,
+ {
+  "Column3": "* (Cuota 1 a 7) Incluye 9.90% del derecho de ingreso y el 10% autorizado por la IGJN Resolución Nro. 000176\/04\n* (Suscripción\/Cuota 8 en adelante) Incluye 10% autorizado por la IGJN Resolución Nro. 000176\/04\n(1) En los valores de las cuotas comerciales se adicionará según el artículo 13 del titulo de capitalización los impuestos que pudieran corresponder para cada jurisdicción"
+ },
+ null,
+ null,
+ {
+  "Column2": "20\/10\/2025 10:26:57",
+  "Column10": "Página 1 de 1"
+ }
+]

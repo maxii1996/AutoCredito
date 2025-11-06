@@ -1,0 +1,176 @@
+[
+ null,
+ {
+  "Column6": "VIGENCIA ANUAL"
+ },
+ {
+  "Column3": "21-08-2025 al 20-12-2025 - Plan 300 V032019",
+  "Column9": "Derecho de ingreso",
+  "Column11": "Cuota comercial del mes"
+ },
+ null,
+ {
+  "Column3": "Código",
+  "Column4": "Descripción",
+  "Column8": " Valor Nominal",
+  "Column9": "Suscripción",
+  "Column11": "Cuota 1 a 7",
+  "Column12": "Cuota 8 en adelante",
+  "Column13": "Derecho de Ingreso"
+ },
+ null,
+ {
+  "Column3": 24698,
+  "Column4": "VEINTE MILLONES PESOS ($20.000.000,00)",
+  "Column8": 20000000,
+  "Column9": 98068.08,
+  "Column11": 97624.56,
+  "Column12": 66000,
+  "Column13": 319440
+ },
+ {
+  "Column3": 34055,
+  "Column4": "VEINTIDOS MILLONES PESOS ($22.000.000,00)",
+  "Column8": 22000000,
+  "Column9": 107874.888,
+  "Column11": 107387.016,
+  "Column12": 72600,
+  "Column13": 351384
+ },
+ {
+  "Column3": 27558,
+  "Column4": "VEINTICINCO MILLONES PESOS ($25.000.000,00)",
+  "Column8": 25000000,
+  "Column9": 122585.1,
+  "Column11": 122030.7,
+  "Column12": 82500,
+  "Column13": 399300.00000000006
+ },
+ {
+  "Column3": 34056,
+  "Column4": "VEINTISIETE MILLONES PESOS ($27.000.000,00)",
+  "Column8": 27000000,
+  "Column9": 132391.908,
+  "Column11": 131793.156,
+  "Column12": 89100,
+  "Column13": 431244.00000000006
+ },
+ {
+  "Column3": 27559,
+  "Column4": "TREINTA MILLONES PESOS ($30.000.000,00)",
+  "Column8": 30000000,
+  "Column9": 147102.12,
+  "Column11": 146436.84,
+  "Column12": 99000,
+  "Column13": 479160.00000000006
+ },
+ {
+  "Column3": 34057,
+  "Column4": "TREINTA Y DOS MILLONES PESOS ($32.000.000,00)",
+  "Column8": 32000000,
+  "Column9": 156908.928,
+  "Column11": 156199.296,
+  "Column12": 105600,
+  "Column13": 511104.00000000006
+ },
+ {
+  "Column3": 27560,
+  "Column4": "TREINTA Y CINCO MILLONES PESOS ($35.000.000,00)",
+  "Column8": 35000000,
+  "Column9": 171619.14,
+  "Column11": 170842.98,
+  "Column12": 115500,
+  "Column13": 559020
+ },
+ {
+  "Column3": 34058,
+  "Column4": "TREINTA Y SIETE MILLONES PESOS ($37.000.000,00)",
+  "Column8": 37000000,
+  "Column9": 181425.948,
+  "Column11": 180605.436,
+  "Column12": 122100,
+  "Column13": 590964
+ },
+ {
+  "Column3": 27561,
+  "Column4": "CUARENTA MILLONES PESOS ($40.000.000,00)",
+  "Column8": 40000000,
+  "Column9": 196136.16,
+  "Column11": 195249.12,
+  "Column12": 132000,
+  "Column13": 638880
+ },
+ {
+  "Column3": 27562,
+  "Column4": "CUARENTA Y CINCO MILLONES PESOS ($45.000.000,00)",
+  "Column8": 45000000,
+  "Column9": 220653.18,
+  "Column11": 219655.26,
+  "Column12": 148500,
+  "Column13": 718740
+ },
+ {
+  "Column3": 27563,
+  "Column4": "CINCUENTA MILLONES PESOS ($50.000.000,00)",
+  "Column8": 50000000,
+  "Column9": 245170.2,
+  "Column11": 244061.4,
+  "Column12": 165000,
+  "Column13": 798600.0000000001
+ },
+ {
+  "Column3": 36960,
+  "Column4": "SESENTA MILLONES PESOS ($60.000.000,00) (36960)",
+  "Column8": 60000000,
+  "Column9": 294204.24,
+  "Column11": 292873.68,
+  "Column12": 198000,
+  "Column13": 958320.0000000001
+ },
+ {
+  "Column3": 36963,
+  "Column4": "SETENTA MILLONES PESOS ($70.000.000,00) (36963)",
+  "Column8": 70000000,
+  "Column9": 343238.28,
+  "Column11": 341685.96,
+  "Column12": 231000,
+  "Column13": 1118040
+ },
+ {
+  "Column3": 36964,
+  "Column4": "OCHENTA MILLONES PESOS ($80.000.000,00) (36964)",
+  "Column8": 80000000,
+  "Column9": 392272.32,
+  "Column11": 390498.24,
+  "Column12": 264000,
+  "Column13": 1277760
+ },
+ {
+  "Column3": 36965,
+  "Column4": "NOVENTA MILLONES PESOS ($90.000.000,00) (36965)",
+  "Column8": 90000000,
+  "Column9": 441306.36,
+  "Column11": 439310.52,
+  "Column12": 297000,
+  "Column13": 1437480
+ },
+ {
+  "Column3": 36966,
+  "Column4": "CIEN MILLONES PESOS ($100.000.000,00) (36966)",
+  "Column8": 100000000,
+  "Column9": 490340.4,
+  "Column11": 488122.8,
+  "Column12": 330000,
+  "Column13": 1597200.0000000002
+ },
+ null,
+ {
+  "Column3": "* (Cuota 1 a 7) Incluye 9.90% del derecho de ingreso y el 10% autorizado por la IGJN Resolución Nro. 000176\/04\n* (Suscripción\/Cuota 8 en adelante) Incluye 10% autorizado por la IGJN Resolución Nro. 000176\/04\n(1) En los valores de las cuotas comerciales se adicionará según el artículo 13 del titulo de capitalización los impuestos que pudieran corresponder para cada jurisdicción"
+ },
+ null,
+ null,
+ {
+  "Column2": "21\/08\/2025 06:30:08",
+  "Column10": "Página 1 de 1"
+ }
+]

@@ -1,0 +1,47 @@
+[
+ null,
+ {
+  "Column6": "**CAMPAÑA 2025-11"
+ },
+ {
+  "Column3": "21-10-2025 al 20-11-2025 - Plan 300 V032019",
+  "Column9": "Derecho de ingreso",
+  "Column11": "Cuota comercial del mes"
+ },
+ null,
+ {
+  "Column3": "Código",
+  "Column4": "Descripción",
+  "Column8": " Valor Nominal",
+  "Column9": "Suscripción",
+  "Column11": "Cuota 1 a 7",
+  "Column12": "Cuota 8 en adelante",
+  "Column13": "Derecho de Ingreso"
+ },
+ {
+  "Column3": 16358,
+  "Column4": "ARTICULOS PARA EL HOGAR PACK STANDAR",
+  "Column8": 18620000,
+  "Column9": 91301.38248,
+  "Column11": 90888.46536,
+  "Column12": 61446,
+  "Column13": 297398.6400000001
+ },
+ {
+  "Column3": 16359,
+  "Column4": "ARTICULOS PARA EL HOGAR PACK PREMIUM",
+  "Column8": 23070000,
+  "Column9": 113121.53028,
+  "Column11": 112609.92996,
+  "Column12": 76131,
+  "Column13": 368474.04000000004
+ },
+ null,
+ null,
+ null,
+ null,
+ {
+  "Column2": "20\/10\/2025 10:30:59",
+  "Column10": "Página 1 de 1"
+ }
+]

@@ -1,334 +1,448 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Gestor de Productos | Auto Crédito</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-:root{--font-scale:1}
-html{font-size:calc(16px*var(--font-scale))}
-.table-wrapper{overflow-x:auto}
-.modal{background:rgba(0,0,0,.6);z-index:40}
-.resizable{resize:horizontal;overflow:auto}
-body::after{content:"";display:block;height:4rem}
-.suggestions{position:absolute;top:calc(100% + .25rem);left:0;z-index:50;background:#fff;border:1px solid #d1d5db;max-height:12rem;overflow-y:auto;width:100%;font-size:.75rem}
-.suggestions li{padding:.125rem .5rem;cursor:pointer}
-.suggestions li:hover{background:#f3f4f6}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestor de Productos | Auto Crédito</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/main.css">
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-<div id="app" class="flex-1">
-<nav class="bg-white shadow py-3 px-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-<div class="flex items-center gap-3">
-<h1 class="text-lg font-bold text-gray-400"><i class="fa-solid fa-table-list mr-2"></i>Auto Credito | Puerto Madero | Team VENTAS</h1>
-</div>
-<div class="flex items-center gap-2 text-sm">
-<span class="font-medium">Actualizado al:</span>
-<input type="date" v-model="fecha" class="border rounded px-2 py-1">
-<button @click="showConfig=true" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"><i class="fa-solid fa-gear"></i><span>Config</span></button>
-</div>
-</nav>
+<body class="bg-gray-100">
+  <div id="app"></div>
 
-<div v-if="reminders.length" class="bg-white-500 text-yellow-800 px-6 py-2 text-center text-sm">{{currentReminder}}</div>
+  <template id="app-template">
+    <div class="min-h-screen flex flex-col">
+      <nav class="bg-white/95 backdrop-blur border-b border-gray-200 py-4 px-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
+            <i class="fa-solid fa-table-list text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-800 leading-tight">Auto Crédito | Puerto Madero | Team Ventas</h1>
+            <p class="text-xs text-gray-500">Gestión centralizada de planes y bases operativas</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <label class="flex items-center gap-2 font-medium text-gray-600">
+            <span>Actualizado al:</span>
+            <input type="date" v-model="fecha" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md text-sm">
+          </label>
+          <button @click="showConfig = true" class="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow hover:bg-gray-700 transition">
+            <i class="fa-solid fa-gear"></i>
+            <span>Config</span>
+          </button>
+        </div>
+      </nav>
 
-<section class="bg-white shadow mt-4 mx-6 rounded-lg p-4 flex flex-wrap gap-3 text-sm">
-<label class="relative inline-flex items-center gap-2 cursor-pointer">
-<input type="file" @change="importPlanilla" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer">
-<span class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded flex items-center gap-2"><i class="fa-solid fa-circle-plus"></i>Agregar Planilla</span>
-</label>
-<label class="relative inline-flex items-center gap-2 cursor-pointer">
-<input type="file" @change="importBase" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer">
-<span class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-2"><i class="fa-solid fa-file-import"></i>Cargar Base</span>
-</label>
-<button @click="exportJSON" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded flex items-center gap-2"><i class="fa-solid fa-file-export"></i>Exportar Base</button>
-<button @click="showPago=true;showDetalle=false" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded flex items-center gap-2"><i class="fa-solid fa-hand-holding-dollar"></i>Busqueda Pago</button>
-<button @click="showProvincias=true" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded flex items-center gap-2"><i class="fa-solid fa-map-location-dot"></i>Provincias Excluidas</button>
-<button @click="showRequisitos=true" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded flex items-center gap-2"><i class="fa-solid fa-file-circle-check"></i>Requisitos de Pago</button>
-</section>
+      <div v-if="reminders.length" class="bg-indigo-600 text-white px-6 py-2 text-center text-sm tracking-wide shadow">
+        {{ currentReminder }}
+      </div>
 
-<section class="bg-white shadow mt-4 mx-6 rounded-lg p-4 flex flex-wrap gap-4 items-end text-sm">
-<div class="flex flex-col w-44">
-<label class="font-semibold mb-1"><i class="fa-solid fa-filter mr-1"></i>Categoría</label>
-<select v-model="filtroCat" class="border rounded px-2 py-1">
-<option value="todos">Todas</option>
-<option v-for="c in categorias" :value="c.id">{{c.nombre}}</option>
-</select>
-</div>
-<div class="flex flex-col">
-<label class="font-semibold mb-1"><i class="fa-solid fa-magnifying-glass mr-1"></i>Buscar</label>
-<input v-model="search" placeholder="Nombre o código" class="border rounded px-2 py-1 w-56">
-</div>
-<div class="flex flex-col">
-<label class="font-semibold mb-1"><i class="fa-solid fa-money-bill-wave mr-1"></i>Valor Nominal</label>
-<div class="flex gap-2">
-<div class="flex flex-col relative w-32">
-<input type="text" v-model="priceMinText" @input="formatPrice('min')" @focus="focused='min'" @blur="hideSuggestions" placeholder="Mín" class="border rounded px-2 py-1 text-right">
-<ul v-if="suggestionsMin.length && focused==='min'" class="suggestions">
-<li v-for="s in suggestionsMin" @click="selectSuggestion('min',s.value)">{{s.label}}</li>
-</ul>
-</div>
-<div class="flex flex-col relative w-32">
-<input type="text" v-model="priceMaxText" @input="formatPrice('max')" @focus="focused='max'" @blur="hideSuggestions" placeholder="Máx" class="border rounded px-2 py-1 text-right">
-<ul v-if="suggestionsMax.length && focused==='max'" class="suggestions">
-<li v-for="s in suggestionsMax" @click="selectSuggestion('max',s.value)">{{s.label}}</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="flex items-center gap-2 ml-auto">
-<input type="checkbox" id="edit" v-model="modoEdicion" @change="toggleModoEdicion" class="h-4 w-4">
-<label for="edit" class="font-semibold select-none">Modo Edición</label>
-</div>
-</section>
+      <main class="flex-1 flex flex-col gap-6 py-6 px-6">
+        <section class="bg-white shadow rounded-2xl p-6 flex flex-wrap gap-3 text-sm items-center">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Acciones rápidas</h2>
+          <div class="flex flex-wrap items-center gap-3 ml-auto">
+            <label class="relative inline-flex items-center gap-2 cursor-pointer">
+              <input type="file" @change="handleBaseUpload" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer">
+              <span class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+                <i class="fa-solid fa-file-import"></i>
+                Cargar Base
+              </span>
+            </label>
+            <button @click="exportJSON" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+              <i class="fa-solid fa-file-export"></i>
+              Exportar Base
+            </button>
+            <button @click="showPago = true; showDetalle = false" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+              <i class="fa-solid fa-hand-holding-dollar"></i>
+              Búsqueda Pago
+            </button>
+            <button @click="showProvincias = true" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+              <i class="fa-solid fa-map-location-dot"></i>
+              Provincias Excluidas
+            </button>
+            <button @click="showRequisitos = true" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+              <i class="fa-solid fa-file-circle-check"></i>
+              Requisitos de Pago
+            </button>
+          </div>
+        </section>
 
-<section class="table-wrapper bg-white shadow mt-4 mx-6 rounded-lg">
-<table class="min-w-full text-sm whitespace-nowrap table-fixed">
-<thead class="bg-gray-100 text-left">
-<tr>
-<th v-if="!settings.hidden.categoria" class="p-3 resizable" :style="colStyle('cat')"><span class="flex items-center gap-1 cursor-pointer select-none" @click="sort('cat')">Categoría<i v-if="sortKey==='cat'" :class="sortDir===1?'fa-solid fa-sort-up':'fa-solid fa-sort-down'"></i></span></th>
-<th v-if="!settings.hidden.codigo" class="p-3 resizable" :style="colStyle('cod')"><span class="flex items-center gap-1 cursor-pointer select-none" @click="sort('cod')">Código<i v-if="sortKey==='cod'" :class="sortDir===1?'fa-solid fa-sort-up':'fa-solid fa-sort-down'"></i></span></th>
-<th class="p-3 resizable" :style="colStyle('nom')"><span class="flex items-center gap-1 cursor-pointer select-none" @click="sort('nom')">Nombre<i v-if="sortKey==='nom'" :class="sortDir===1?'fa-solid fa-sort-up':'fa-solid fa-sort-down'"></i></span></th>
-<th class="p-3 resizable" :style="colStyle('val')"><span class="flex items-center gap-1 cursor-pointer select-none" @click="sort('val')">Valor Nominal<i v-if="sortKey==='val'" :class="sortDir===1?'fa-solid fa-sort-up':'fa-solid fa-sort-down'"></i></span></th>
-<th class="p-3 resizable" :style="colStyle('sus')"><span class="flex items-center gap-1 cursor-pointer select-none" @click="sort('sus')">Suscripción<i v-if="sortKey==='sus'" :class="sortDir===1?'fa-solid fa-sort-up':'fa-solid fa-sort-down'"></i></span></th>
-<th class="p-3 resizable" :style="colStyle('c17')"><span class="flex items-center gap-1 cursor-pointer select-none" @click="sort('c17')">Cuota 1-7<i v-if="sortKey==='c17'" :class="sortDir===1?'fa-solid fa-sort-up':'fa-solid fa-sort-down'"></i></span></th>
-<th class="p-3 resizable" :style="colStyle('c8')"><span class="flex items-center gap-1 cursor-pointer select-none" @click="sort('c8')">Cuota 8+<i v-if="sortKey==='c8'" :class="sortDir===1?'fa-solid fa-sort-up':'fa-solid fa-sort-down'"></i></span></th>
-<th class="p-3 resizable" :style="colStyle('der')"><span class="flex items-center gap-1 cursor-pointer select-none" @click="sort('der')">Derecho Ingreso<i v-if="sortKey==='der'" :class="sortDir===1?'fa-solid fa-sort-up':'fa-solid fa-sort-down'"></i></span></th>
-<th v-if="modoEdicion" class="p-3 w-24">Acciones</th>
-</tr>
-</thead>
-<tbody>
-<tr v-for="p in productosOrdenados" :key="p.id" class="border-t hover:bg-gray-50 text-left cursor-pointer" @click="!modoEdicion && mostrarDetalle(p)">
-<td v-if="!settings.hidden.categoria" class="p-3" v-if="editingRow!==p.id">{{catNombre(p.categoriaId)}}</td>
-<td v-if="!settings.hidden.categoria && editingRow===p.id" class="p-3"><input v-model="p.categoriaId" class="border px-1 py-px w-24"></td>
-<td v-if="!settings.hidden.codigo && editingRow!==p.id" class="p-3">{{p.codigo}}</td>
-<td v-if="!settings.hidden.codigo && editingRow===p.id" class="p-3"><input v-model="p.codigo" class="border px-1 py-px w-20"></td>
-<td v-if="editingRow!==p.id" class="p-3 truncate" :title="p.nombre">{{p.nombre}}</td>
-<td v-if="editingRow===p.id" class="p-3"><input v-model="p.nombre" class="border px-1 py-px w-40"></td>
-<td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.valorNominal)"></td>
-<td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.valorNominal" class="border px-1 py-px w-32 text-right"></td>
-<td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.suscripcion)"></td>
-<td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.suscripcion" class="border px-1 py-px w-32 text-right"></td>
-<td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.cuota17)"></td>
-<td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.cuota17" class="border px-1 py-px w-32 text-right"></td>
-<td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.cuota8mas)"></td>
-<td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.cuota8mas" class="border px-1 py-px w-32 text-right"></td>
-<td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.derechoIngreso)"></td>
-<td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.derechoIngreso" class="border px-1 py-px w-32 text-right"></td>
-<td v-if="modoEdicion" class="p-3 flex gap-1">
-<button v-if="editingRow!==p.id" @click.stop="edit(p)" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs"><i class="fa-solid fa-pen"></i></button>
-<button v-else @click.stop="edit(p)" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"><i class="fa-solid fa-save"></i></button>
-<button @click.stop="delProd(p.id)" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"><i class="fa-solid fa-trash"></i></button>
-</td>
-</tr>
-</tbody>
-</table>
-</section>
+        <section class="bg-white shadow rounded-2xl p-6 flex flex-wrap gap-6 items-end text-sm">
+          <div class="flex flex-col w-48">
+            <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
+              <i class="fa-solid fa-filter text-indigo-500"></i>
+              Categoría
+            </label>
+            <select v-model="filtroCat" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md">
+              <option value="todos">Todas</option>
+              <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
+            </select>
+          </div>
+          <div class="flex flex-col">
+            <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass text-indigo-500"></i>
+              Buscar
+            </label>
+            <input v-model="search" placeholder="Nombre o código" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md w-56">
+          </div>
+          <div class="flex flex-col">
+            <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
+              <i class="fa-solid fa-money-bill-wave text-indigo-500"></i>
+              Valor Nominal
+            </label>
+            <div class="flex gap-3">
+              <div class="flex flex-col relative w-32">
+                <input type="text" v-model="priceMinText" @input="formatPrice('min')" @focus="focused = 'min'" @blur="hideSuggestions" placeholder="Mín" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 text-right">
+                <ul v-if="suggestionsMin.length && focused === 'min'" class="suggestions">
+                  <li v-for="s in suggestionsMin" :key="s.value" @mousedown.prevent="selectSuggestion('min', s.value)">{{ s.label }}</li>
+                </ul>
+              </div>
+              <div class="flex flex-col relative w-32">
+                <input type="text" v-model="priceMaxText" @input="formatPrice('max')" @focus="focused = 'max'" @blur="hideSuggestions" placeholder="Máx" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 text-right">
+                <ul v-if="suggestionsMax.length && focused === 'max'" class="suggestions">
+                  <li v-for="s in suggestionsMax" :key="s.value" @mousedown.prevent="selectSuggestion('max', s.value)">{{ s.label }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 ml-auto">
+            <input type="checkbox" id="edit" v-model="modoEdicion" @change="toggleModoEdicion" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+            <label for="edit" class="font-semibold text-gray-700 select-none">Modo Edición</label>
+          </div>
+        </section>
 
-<div v-if="showConfig" class="fixed inset-0 flex items-center justify-center modal">
-<div class="bg-white rounded-lg w-80 p-6 shadow-xl relative">
-<button @click="showConfig=false" class="absolute top-3 right-3 text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
-<h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-sliders mr-1"></i>Configuraciones</h2>
-<div class="flex items-center justify-between mb-3"><span class="font-medium">Tamaño Fuente</span><div class="flex gap-2"><button @click="changeFont(-0.1)" class="border rounded px-2 py-1"><i class="fa-solid fa-minus"></i></button><button @click="changeFont(0.1)" class="border rounded px-2 py-1"><i class="fa-solid fa-plus"></i></button></div></div>
-<div class="flex items-center justify-between mb-3"><span class="font-medium">Mostrar decimales</span><input type="checkbox" v-model="settings.dec" class="h-4 w-4"></div>
-<div class="flex items-center justify-between mb-3"><span class="font-medium">Formato simplificado</span><input type="checkbox" v-model="settings.simple" class="h-4 w-4"></div>
-<div class="mt-4"><span class="font-semibold block mb-2">¿Qué deseas ocultar?</span><label class="flex items-center gap-2 mb-1"><input type="checkbox" v-model="settings.hidden.categoria" class="h-4 w-4"><span>Categoría</span></label><label class="flex items-center gap-2"><input type="checkbox" v-model="settings.hidden.codigo" class="h-4 w-4"><span>Código</span></label></div>
-<div class="mt-6"><span class="font-semibold block mb-2">Recordatorios</span><div class="space-y-1 max-h-40 overflow-y-auto"><div v-for="(r,i) in reminders" :key="i" class="flex items-center gap-2"><input v-model="reminders[i]" class="border px-2 py-1 flex-1"><button @click="reminders.splice(i,1)" class="text-red-600"><i class="fa-solid fa-trash"></i></button></div></div><div class="flex gap-2 mt-2"><input v-model="newReminder" placeholder="Nuevo recordatorio" class="border px-2 py-1 flex-1"><button @click="addReminder" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded">Agregar</button></div></div>
-<button @click="showConfig=false" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded mt-5">Aceptar</button>
-</div>
-</div>
+        <section class="table-wrapper bg-white shadow rounded-2xl">
+          <table class="min-w-full text-sm whitespace-nowrap table-fixed">
+            <thead class="bg-gray-100 text-left text-gray-600 uppercase text-xs tracking-wide">
+              <tr>
+                <th v-if="!settings.hidden.categoria" class="p-3 resizable" :style="colStyle('cat')" data-col="cat">
+                  <span class="flex items-center gap-2 cursor-pointer select-none" @click="sort('cat')">
+                    Categoría
+                    <i v-if="sortKey === 'cat'" :class="sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'"></i>
+                  </span>
+                </th>
+                <th v-if="!settings.hidden.codigo" class="p-3 resizable" :style="colStyle('cod')" data-col="cod">
+                  <span class="flex items-center gap-2 cursor-pointer select-none" @click="sort('cod')">
+                    Código
+                    <i v-if="sortKey === 'cod'" :class="sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'"></i>
+                  </span>
+                </th>
+                <th class="p-3 resizable" :style="colStyle('nom')" data-col="nom">
+                  <span class="flex items-center gap-2 cursor-pointer select-none" @click="sort('nom')">
+                    Nombre
+                    <i v-if="sortKey === 'nom'" :class="sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'"></i>
+                  </span>
+                </th>
+                <th class="p-3 resizable" :style="colStyle('val')" data-col="val">
+                  <span class="flex items-center gap-2 cursor-pointer select-none" @click="sort('val')">
+                    Valor Nominal
+                    <i v-if="sortKey === 'val'" :class="sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'"></i>
+                  </span>
+                </th>
+                <th class="p-3 resizable" :style="colStyle('sus')" data-col="sus">
+                  <span class="flex items-center gap-2 cursor-pointer select-none" @click="sort('sus')">
+                    Suscripción
+                    <i v-if="sortKey === 'sus'" :class="sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'"></i>
+                  </span>
+                </th>
+                <th class="p-3 resizable" :style="colStyle('c17')" data-col="c17">
+                  <span class="flex items-center gap-2 cursor-pointer select-none" @click="sort('c17')">
+                    Cuota 1-7
+                    <i v-if="sortKey === 'c17'" :class="sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'"></i>
+                  </span>
+                </th>
+                <th class="p-3 resizable" :style="colStyle('c8')" data-col="c8">
+                  <span class="flex items-center gap-2 cursor-pointer select-none" @click="sort('c8')">
+                    Cuota 8+
+                    <i v-if="sortKey === 'c8'" :class="sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'"></i>
+                  </span>
+                </th>
+                <th class="p-3 resizable" :style="colStyle('der')" data-col="der">
+                  <span class="flex items-center gap-2 cursor-pointer select-none" @click="sort('der')">
+                    Derecho Ingreso
+                    <i v-if="sortKey === 'der'" :class="sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down'"></i>
+                  </span>
+                </th>
+                <th v-if="modoEdicion" class="p-3 w-28 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in productosOrdenados" :key="p.id" class="border-t border-gray-100 hover:bg-gray-50 text-left cursor-pointer" @click="!modoEdicion && mostrarDetalle(p)">
+                <td v-if="!settings.hidden.categoria && editingRow !== p.id" class="p-3">{{ catNombre(p.categoriaId) }}</td>
+                <td v-if="!settings.hidden.categoria && editingRow === p.id" class="p-3">
+                  <input v-model="p.categoriaId" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-2 py-1 w-28">
+                </td>
+                <td v-if="!settings.hidden.codigo && editingRow !== p.id" class="p-3">{{ p.codigo }}</td>
+                <td v-if="!settings.hidden.codigo && editingRow === p.id" class="p-3">
+                  <input v-model="p.codigo" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-2 py-1 w-24">
+                </td>
+                <td v-if="editingRow !== p.id" class="p-3 truncate" :title="p.nombre">{{ p.nombre }}</td>
+                <td v-if="editingRow === p.id" class="p-3">
+                  <input v-model="p.nombre" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-2 py-1 w-48">
+                </td>
+                <td v-if="editingRow !== p.id" class="p-3" v-html="fmt(p.valorNominal)"></td>
+                <td v-if="editingRow === p.id" class="p-3">
+                  <input v-model.number="p.valorNominal" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-2 py-1 w-32 text-right">
+                </td>
+                <td v-if="editingRow !== p.id" class="p-3" v-html="fmt(p.suscripcion)"></td>
+                <td v-if="editingRow === p.id" class="p-3">
+                  <input v-model.number="p.suscripcion" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-2 py-1 w-32 text-right">
+                </td>
+                <td v-if="editingRow !== p.id" class="p-3" v-html="fmt(p.cuota17)"></td>
+                <td v-if="editingRow === p.id" class="p-3">
+                  <input v-model.number="p.cuota17" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-2 py-1 w-32 text-right">
+                </td>
+                <td v-if="editingRow !== p.id" class="p-3" v-html="fmt(p.cuota8mas)"></td>
+                <td v-if="editingRow === p.id" class="p-3">
+                  <input v-model.number="p.cuota8mas" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-2 py-1 w-32 text-right">
+                </td>
+                <td v-if="editingRow !== p.id" class="p-3" v-html="fmt(p.derechoIngreso)"></td>
+                <td v-if="editingRow === p.id" class="p-3">
+                  <input v-model.number="p.derechoIngreso" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-2 py-1 w-32 text-right">
+                </td>
+                <td v-if="modoEdicion" class="p-3">
+                  <div class="flex items-center gap-2 justify-center">
+                    <button v-if="editingRow !== p.id" @click.stop="edit(p)" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-md text-xs shadow transition">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button v-else @click.stop="edit(p)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-md text-xs shadow transition">
+                      <i class="fa-solid fa-save"></i>
+                    </button>
+                    <button @click.stop="delProd(p.id)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs shadow transition">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
 
-<div v-if="showDetalle" class="fixed inset-0 flex items-center justify-center modal" @click.self="showDetalle=false">
-<div class="bg-white rounded-lg w-full max-w-lg shadow-2xl relative">
-<button @click="showDetalle=false" class="absolute -top-4 -right-4 bg-red-600 text-white rounded-full p-3 shadow-lg hover:bg-red-700"><i class="fa-solid fa-xmark"></i></button>
-<div class="bg-gradient-to-r from-indigo-600 to-blue-500 rounded-t-lg px-6 py-4 text-center text-white text-lg font-semibold">Detalle del Producto</div>
-<div class="p-6 space-y-6 text-sm">
-<p class="text-base"><span class="font-semibold">Producto que el cliente desea:</span> {{selectedProd.nombre}}</p>
-<p class="text-base"><span class="font-semibold">Valor nominal del producto:</span> <span class="font-bold" v-html="fmt(selectedProd.valorNominal)"></span></p>
-<div class="p-4 rounded-lg bg-blue-50 border-l-4 border-blue-500 space-y-1">
-<p class="font-semibold">1) Pago Inicial (Derecho Ingreso) de <span class="font-bold" v-html="fmt(selectedProd.derechoIngreso)"></span></p>
-<p>Puede hacerlo en 2 cuotas sin interés de <span class="font-bold" v-html="fmt(selectedProd.derechoIngreso/2)"></span> cada una.</p>
-<p>Si paga este valor, las primeras 12 cuotas fijas le quedan en <span class="font-bold" v-html="fmt(selectedProd.cuota8mas)"></span></p>
-</div>
-<div class="p-4 rounded-lg bg-green-50 border-l-4 border-green-500 space-y-1">
-<p class="font-semibold">2) Pago Inicial (Derecho Ingreso por Suscripción)</p>
-<p>Su pago sería de <span class="font-bold" v-html="fmt(selectedProd.suscripcion)"></span></p>
-<p>Las primeras 7 cuotas fijas serían de <span class="font-bold" v-html="fmt(selectedProd.cuota17)"></span></p>
-<p>A partir de la cuota 8 empezaría a pagar solamente <span class="font-bold" v-html="fmt(selectedProd.cuota8mas)"></span></p>
-</div>
-</div>
-</div>
-</div>
+      <div v-if="showConfig" class="fixed inset-0 flex items-center justify-center modal">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 relative space-y-6 config-modal">
+          <button @click="showConfig = false" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <span class="h-12 w-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
+                <i class="fa-solid fa-sliders"></i>
+              </span>
+              Configuraciones avanzadas
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">Personaliza tu experiencia de trabajo y gestiona la carga de información.</p>
+          </div>
+          <div class="config-grid">
+            <div class="bg-gray-50 rounded-xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="font-medium text-gray-700">Tamaño Fuente</span>
+                <div class="flex items-center gap-2">
+                  <button @click="changeFont(-0.1)" class="h-9 w-9 flex items-center justify-center border border-gray-300 rounded-md hover:border-indigo-500 hover:text-indigo-500 transition">
+                    <i class="fa-solid fa-minus"></i>
+                  </button>
+                  <button @click="changeFont(0.1)" class="h-9 w-9 flex items-center justify-center border border-gray-300 rounded-md hover:border-indigo-500 hover:text-indigo-500 transition">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+              <label class="flex items-center justify-between font-medium text-gray-700">
+                <span>Mostrar decimales</span>
+                <input type="checkbox" v-model="settings.dec" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+              </label>
+              <label class="flex items-center justify-between font-medium text-gray-700">
+                <span>Formato simplificado</span>
+                <input type="checkbox" v-model="settings.simple" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+              </label>
+              <div>
+                <span class="font-semibold text-gray-800 block mb-2">¿Qué deseas ocultar?</span>
+                <label class="flex items-center gap-3 text-sm text-gray-600 mb-2">
+                  <input type="checkbox" v-model="settings.hidden.categoria" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                  Categoría
+                </label>
+                <label class="flex items-center gap-3 text-sm text-gray-600">
+                  <input type="checkbox" v-model="settings.hidden.codigo" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                  Código
+                </label>
+              </div>
+            </div>
 
-<div v-if="showPago" class="fixed inset-0 flex items-center justify-center modal">
-<div class="bg-white rounded-lg w-full max-w-2xl shadow-2xl p-6 relative">
-<button @click="showPago=false" class="absolute top-3 right-3 text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
-<h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-hand-holding-dollar"></i>Busqueda según capacidad de pago</h2>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-<div class="flex flex-col relative">
-<label class="font-semibold mb-1">Monto que puede pagar</label>
-<input type="text" v-model="pagoMontoText" @input="formatMonto" @focus="focused='monto'" @blur="hideSuggestions" class="border rounded px-2 py-1">
-<ul v-if="suggestionsMonto.length && focused==='monto'" class="suggestions">
-<li v-for="s in suggestionsMonto" @click="selectSuggestion('monto',s.value)">{{s.label}}</li>
-</ul>
-</div>
-<div class="flex flex-col">
-<label class="font-semibold mb-1">Tipo de referencia</label>
-<select v-model="pagoTipo" class="border rounded px-2 py-1">
-<option value="di">Derecho Ingreso</option>
-<option value="cuota">Cada Cuota Indiv.</option>
-</select>
-</div>
-<div class="flex flex-col relative">
-<label class="font-semibold mb-1">Margen ± %</label>
-<input type="text" v-model="pagoMargenText" @input="formatMargen" @focus="focused='margen'" @blur="hideSuggestions" class="border rounded px-2 py-1">
-<ul v-if="suggestionsMargen.length && focused==='margen'" class="suggestions">
-<li v-for="s in suggestionsMargen" @click="selectSuggestion('margen',s.value)">{{s.label}}</li>
-</ul>
-</div>
-</div>
-<button @click="buscarOpcionesPago" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded mt-4 flex items-center justify-center gap-2"><i class="fa-solid fa-search"></i>Buscar opciones</button>
-<div v-if="resultadosPago.length" class="mt-6">
-<h3 class="font-semibold mb-2">Opciones encontradas:</h3>
-<table class="w-full text-sm border">
-<thead class="bg-gray-100"><tr><th class="p-2 text-left">Producto</th><th class="p-2 text-left">Valor</th><th class="p-2 text-left">Tipo</th></tr></thead>
-<tbody>
-<tr v-for="r in resultadosPago" :key="r.id" class="border-t cursor-pointer hover:bg-gray-50" @click="mostrarDetalle(r)">
-<td class="p-2">{{r.nombre}}</td>
-<td class="p-2" v-html="fmt(r.valorMatch)"></td>
-<td class="p-2">{{r.tipoRef}}</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div v-else class="text-center text-sm mt-4" v-if="buscado">No se encontraron coincidencias.</div>
-</div>
-</div>
+            <div class="bg-gray-50 rounded-xl p-5 space-y-4">
+              <span class="font-semibold text-gray-800 block">Carga de planillas</span>
+              <div class="upload-tile">
+                <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-500 mb-3"></i>
+                <p class="text-sm font-medium text-gray-700">Agregar planillas (.json)</p>
+                <p class="text-xs text-gray-500 mt-1">Selecciona uno o varios archivos y se incorporarán automáticamente.</p>
+                <input type="file" multiple accept=".json" @change="handlePlanillaUpload">
+              </div>
+              <p class="text-xs text-gray-500 leading-relaxed">
+                Las planillas cargadas se asignarán a una categoría con el nombre del archivo. Si la categoría ya existe, los productos se sumarán a la lista vigente.
+              </p>
+            </div>
 
-<div v-if="showProvincias" class="fixed inset-0 flex items-center justify-center modal" @click.self="showProvincias=false">
-<div class="bg-white rounded-lg w-96 p-6 shadow-2xl relative">
-<button @click="showProvincias=false" class="absolute top-3 right-3 text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
-<h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-map-location-dot"></i>Provincias Excluidas</h2>
-<ul class="list-disc list-inside space-y-1 text-sm">
-<li>Chaco</li>
-<li>Mendoza</li>
-<li>Misiones</li>
-<li>Salta</li>
-</ul>
-</div>
-</div>
+            <div class="bg-gray-50 rounded-xl p-5 space-y-4 max-h-72 overflow-hidden">
+              <div class="flex items-start justify-between">
+                <span class="font-semibold text-gray-800">Recordatorios</span>
+                <span class="text-xs text-gray-400">{{ reminders.length }} activos</span>
+              </div>
+              <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                <div v-for="(r, i) in reminders" :key="i" class="flex items-center gap-2">
+                  <input v-model="reminders[i]" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 flex-1 text-sm">
+                  <button @click="reminders.splice(i, 1)" class="text-red-500 hover:text-red-600 transition">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <input v-model="newReminder" placeholder="Nuevo recordatorio" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 flex-1 text-sm">
+                <button @click="addReminder" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+                  Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+          <button @click="showConfig = false" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold shadow transition">
+            Guardar y cerrar
+          </button>
+        </div>
+      </div>
 
-<div v-if="showRequisitos" class="fixed inset-0 flex items-center justify-center modal" @click.self="showRequisitos=false">
-<div class="bg-white rounded-lg w-96 p-6 shadow-2xl relative">
-<button @click="showRequisitos=false" class="absolute top-3 right-3 text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
-<h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-file-circle-check"></i>Requisitos de Pago</h2>
-<ul class="list-disc list-inside space-y-1 text-sm">
-<li>Tarjetas de Crédito</li>
-<li>Recibo de Sueldo (También sirve que en su extracto banc. diga "pago Haberes")</li>
-<li>DNI</li>
-</ul>
-</div>
-</div>
-</div>
+      <div v-if="showDetalle" class="fixed inset-0 flex items-center justify-center modal" @click.self="showDetalle = false">
+        <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl relative overflow-hidden">
+          <button @click="showDetalle = false" class="absolute -top-4 -right-4 bg-red-600 text-white rounded-full p-3 shadow-lg hover:bg-red-700 transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="bg-gradient-to-r from-indigo-600 to-blue-500 px-8 py-6 text-center text-white text-lg font-semibold">
+            Detalle del Producto
+          </div>
+          <div class="p-8 space-y-6 text-sm text-gray-700">
+            <p class="text-base"><span class="font-semibold">Producto que el cliente desea:</span> {{ selectedProd.nombre }}</p>
+            <p class="text-base"><span class="font-semibold">Valor nominal del producto:</span> <span class="font-bold" v-html="fmt(selectedProd.valorNominal)"></span></p>
+            <div class="p-5 rounded-2xl bg-blue-50 border border-blue-100 space-y-2">
+              <p class="font-semibold text-blue-700">1) Pago Inicial (Derecho Ingreso) de <span class="font-bold" v-html="fmt(selectedProd.derechoIngreso)"></span></p>
+              <p class="text-blue-700">Puede hacerlo en 2 cuotas sin interés de <span class="font-bold" v-html="fmt(selectedProd.derechoIngreso / 2)"></span> cada una.</p>
+              <p class="text-blue-700">Si paga este valor, las primeras 12 cuotas fijas le quedan en <span class="font-bold" v-html="fmt(selectedProd.cuota8mas)"></span>.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-100 space-y-2">
+              <p class="font-semibold text-emerald-700">2) Pago Inicial (Derecho Ingreso por Suscripción)</p>
+              <p class="text-emerald-700">Su pago sería de <span class="font-bold" v-html="fmt(selectedProd.suscripcion)"></span>.</p>
+              <p class="text-emerald-700">Las primeras 7 cuotas fijas serían de <span class="font-bold" v-html="fmt(selectedProd.cuota17)"></span>.</p>
+              <p class="text-emerald-700">A partir de la cuota 8 empezaría a pagar solamente <span class="font-bold" v-html="fmt(selectedProd.cuota8mas)"></span>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<footer class="bg-gray-200 text-center text-xs py-3 mt-6">Creado por Maximiliano Martinez | Auto Credito Puerto Madero - Turno Tarde - SOLO uso Interno con Autorización.</footer>
+      <div v-if="showPago" class="fixed inset-0 flex items-center justify-center modal">
+        <div class="bg-white rounded-3xl w-full max-w-3xl shadow-2xl p-8 relative">
+          <button @click="showPago = false" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+          <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 text-gray-800">
+            <span class="h-12 w-12 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-200">
+              <i class="fa-solid fa-hand-holding-dollar"></i>
+            </span>
+            Búsqueda según capacidad de pago
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div class="flex flex-col relative">
+              <label class="font-semibold mb-1 text-gray-700">Monto que puede pagar</label>
+              <input type="text" v-model="pagoMontoText" @input="formatMonto" @focus="focused = 'monto'" @blur="hideSuggestions" class="border-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md px-3 py-2">
+              <ul v-if="suggestionsMonto.length && focused === 'monto'" class="suggestions">
+                <li v-for="s in suggestionsMonto" :key="s.value" @mousedown.prevent="selectSuggestion('monto', s.value)">{{ s.label }}</li>
+              </ul>
+            </div>
+            <div class="flex flex-col">
+              <label class="font-semibold mb-1 text-gray-700">Tipo de referencia</label>
+              <select v-model="pagoTipo" class="border-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md px-3 py-2">
+                <option value="di">Derecho Ingreso</option>
+                <option value="cuota">Cada Cuota Indiv.</option>
+              </select>
+            </div>
+            <div class="flex flex-col relative">
+              <label class="font-semibold mb-1 text-gray-700">Margen ± %</label>
+              <input type="text" v-model="pagoMargenText" @input="formatMargen" @focus="focused = 'margen'" @blur="hideSuggestions" class="border-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-md px-3 py-2">
+              <ul v-if="suggestionsMargen.length && focused === 'margen'" class="suggestions">
+                <li v-for="s in suggestionsMargen" :key="s.value" @mousedown.prevent="selectSuggestion('margen', s.value)">{{ s.label }}</li>
+              </ul>
+            </div>
+          </div>
+          <button @click="buscarOpcionesPago" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-semibold mt-6 flex items-center justify-center gap-2 shadow transition">
+            <i class="fa-solid fa-search"></i>
+            Buscar opciones
+          </button>
+          <div v-if="resultadosPago.length" class="mt-8">
+            <h3 class="font-semibold mb-3 text-gray-700">Opciones encontradas</h3>
+            <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+              <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+                <tr>
+                  <th class="p-3 text-left">Producto</th>
+                  <th class="p-3 text-left">Valor</th>
+                  <th class="p-3 text-left">Tipo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in resultadosPago" :key="r.id" class="border-t border-gray-200 cursor-pointer hover:bg-gray-50" @click="mostrarDetalle(r)">
+                  <td class="p-3">{{ r.nombre }}</td>
+                  <td class="p-3" v-html="fmt(r.valorMatch)"></td>
+                  <td class="p-3">{{ r.tipoRef }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else-if="buscado" class="text-center text-sm text-gray-500 mt-6">No se encontraron coincidencias.</div>
+        </div>
+      </div>
 
-<script>
-const{createApp,reactive,computed,watch,ref,onMounted}=Vue
-createApp({
-setup(){
-const uid=()=>crypto.randomUUID()
-const defaults={dec:true,simple:false,font:1,hidden:{categoria:false,codigo:false},col:{}}
-const settings=reactive(Object.assign(defaults,JSON.parse(localStorage.getItem('settings')||'{}')))
-watch(settings,()=>localStorage.setItem('settings',JSON.stringify(settings)),{deep:true})
-watch(()=>settings.font,v=>document.documentElement.style.setProperty('--font-scale',v),{immediate:true})
+      <div v-if="showProvincias" class="fixed inset-0 flex items-center justify-center modal" @click.self="showProvincias = false">
+        <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
+          <button @click="showProvincias = false" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+          <h2 class="text-2xl font-bold mb-4 flex items-center gap-3 text-gray-800">
+            <span class="h-12 w-12 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-200">
+              <i class="fa-solid fa-map-location-dot"></i>
+            </span>
+            Provincias Excluidas
+          </h2>
+          <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+            <li>Chaco</li>
+            <li>Mendoza</li>
+            <li>Misiones</li>
+            <li>Salta</li>
+          </ul>
+        </div>
+      </div>
 
-const fecha=ref(new Date().toISOString().slice(0,10))
-const categorias=reactive([])
-const productos=reactive([])
-const filtroCat=ref('todos')
-const search=ref('')
-const priceMin=ref(null)
-const priceMax=ref(null)
-const priceMinText=ref('')
-const priceMaxText=ref('')
-const modoEdicion=ref(false)
-const showConfig=ref(false)
-const showDetalle=ref(false)
-const showPago=ref(false)
-const showProvincias=ref(false)
-const showRequisitos=ref(false)
-const selectedProd=ref({})
-const suggestionsMin=ref([])
-const suggestionsMax=ref([])
-const suggestionsMonto=ref([])
-const suggestionsMargen=ref([])
-const focused=ref(null)
-const sortKey=ref(null)
-const sortDir=ref(1)
-const pagoMonto=ref(null)
-const pagoMontoText=ref('')
-const pagoTipo=ref('di')
-const pagoMargen=ref(5)
-const pagoMargenText=ref('5')
-const resultadosPago=ref([])
-const buscado=ref(false)
-const reminders=reactive(JSON.parse(localStorage.getItem('reminders')||'["Sorteo: Ultimo Sabado de Cada mes a las 21 horas por lotería nacional.","Auto Crédito: Ventas mediante Sistema ahorro por título de capitalización de pagos mensuales (suscripción) | Sistema de Plan de Ahorro","Planes de 300 Cuotas (25 años)","El cliente puede retirar hasta el 25% de lo que ha pagado hasta el momento, a partir del mes 18.","A partir del mes 13 las cuotas aumentan un 5% nominal, hasta la cuota 12 tiene cuotas Fijas!","Corte de Ciclo: Dia 21 de cada mes: Arrancan a pagar a partir de los 2 meses de haberse suscripto correctamente."]'))
-watch(reminders,()=>localStorage.setItem('reminders',JSON.stringify(reminders)),{deep:true})
-const newReminder=ref('')
-function addReminder(){const t=newReminder.value.trim();if(t){reminders.push(t);newReminder.value=''}}
+      <div v-if="showRequisitos" class="fixed inset-0 flex items-center justify-center modal" @click.self="showRequisitos = false">
+        <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
+          <button @click="showRequisitos = false" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+          <h2 class="text-2xl font-bold mb-4 flex items-center gap-3 text-gray-800">
+            <span class="h-12 w-12 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-200">
+              <i class="fa-solid fa-file-circle-check"></i>
+            </span>
+            Requisitos de Pago
+          </h2>
+          <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+            <li>Tarjetas de Crédito</li>
+            <li>Recibo de Sueldo (También sirve que en su extracto bancario diga "Pago Haberes")</li>
+            <li>DNI</li>
+          </ul>
+        </div>
+      </div>
 
-const editingRow=ref(null)
+      <footer class="app-footer">
+        <div class="app-footer__brand">Creado por Maximiliano Martinez | Auto Crédito Puerto Madero - Turno Tarde - Uso interno autorizado</div>
+        <div class="app-footer__version">Versión del sistema actual: v1.0.1</div>
+      </footer>
+    </div>
+  </template>
 
-function toggleModoEdicion(e){
-if(e.target.checked){
-if(!confirm('Ten en cuenta que la modificación de datos no es recomendable. Los datos se cargan automaticamente con el JSON convertido de los archivos xlsx proporcionados mensualmente. Asi que ten cuidado con lo que cambias para evitar irregularidades.')){modoEdicion.value=false}
-}else{editingRow.value=null}
-}
-
-const currentRemIndex=ref(0)
-const currentReminder=computed(()=>reminders.length?reminders[currentRemIndex.value]:'')
-
-onMounted(()=>{setInterval(()=>{if(reminders.length)currentRemIndex.value=(currentRemIndex.value+1)%reminders.length},5000)})
-
-function floorDec(n,d){const k=10**d;return Math.trunc(n*k)/k}
-function numFmt(n){n=settings.dec?floorDec(n,2):Math.trunc(n);return new Intl.NumberFormat('es-AR',{minimumFractionDigits:settings.dec?2:0,maximumFractionDigits:settings.dec?2:0}).format(n)}
-function simp(n){const M=Math.trunc(n/1e6);const K=Math.trunc((n%1e6)/1e3);if(M===0)return K+' Mil';const lbl=M===1?'Millon':'Millones';if(K===0)return'<strong>'+M+'</strong> <strong>'+lbl+'</strong>';return'<strong>'+M+'</strong> <strong>'+lbl+'</strong> '+K+' Mil'}
-function fmt(n){if(n==null||isNaN(n))return'';return settings.simple?simp(n):numFmt(n)}
-function catNombre(id){return categorias.find(c=>c.id===id)?.nombre||''}
-
-const productosFiltrados=computed(()=>productos.filter(p=>{if(filtroCat.value!=='todos'&&p.categoriaId!==filtroCat.value)return false;if(search.value){const s=search.value.toLowerCase();if(!p.nombre.toLowerCase().includes(s)&&!String(p.codigo).includes(s))return false}if(priceMin.value!=null&&p.valorNominal<priceMin.value)return false;if(priceMax.value!=null&&p.valorNominal>priceMax.value)return false;return true}))
-const productosOrdenados=computed(()=>{const arr=[...productosFiltrados.value];if(!sortKey.value)return arr;function val(p,k){if(k==='cat')return catNombre(p.categoriaId);if(k==='cod')return p.codigo;if(k==='nom')return p.nombre.toLowerCase();if(k==='val')return p.valorNominal;if(k==='sus')return p.suscripcion;if(k==='c17')return p.cuota17;if(k==='c8')return p.cuota8mas;if(k==='der')return p.derechoIngreso;return''}arr.sort((a,b)=>{const va=val(a,sortKey.value);const vb=val(b,sortKey.value);if(va==null)return 1;if(vb==null)return-1;if(typeof va==='number'&&typeof vb==='number')return sortDir.value*(va-vb);return sortDir.value*va.localeCompare(vb)});return arr})
-function sort(k){if(sortKey.value===k){sortDir.value*=-1}else{sortKey.value=k;sortDir.value=1}}
-
-function changeFont(d){settings.font=Math.min(Math.max(0.8,settings.font+d),1.4)}
-function hideSuggestions(){setTimeout(()=>{focused.value=null},200)}
-function parseInput(str){const c=str.toLowerCase().replace(/[\.\,\s]+/g,'');const m=c.match(/^(\d+)([a-z]*)$/);if(!m)return{num:null,suggestions:[]};const raw=parseInt(m[1]);let mult=1;const suf=m[2];if(!suf){return{num:null,suggestions:[{label:`${raw} Mil`,value:raw*1000},{label:`${raw} Millones`,value:raw*1000000}]}}if(suf==='k')mult=1000;else if(suf==='kk')mult=1000000;else if(suf.startsWith('mil'))mult=1000;else if(suf.startsWith('m')||suf.startsWith('mill'))mult=1000000;return{num:raw*mult,suggestions:[]}}
-function formatPrice(type){const txt=type==='min'?priceMinText.value:priceMaxText.value;const{num,suggestions}=parseInput(txt);if(type==='min'){priceMin.value=num;suggestionsMin.value=suggestions}else{priceMax.value=num;suggestionsMax.value=suggestions}}
-function formatMonto(){const{num,suggestions}=parseInput(pagoMontoText.value);pagoMonto.value=num;suggestionsMonto.value=suggestions}
-
-function parsePercent(str){const cleaned=(str||'').toString().toLowerCase().replace(/[^0-9]/g,'');if(cleaned===''){return null}let v=parseInt(cleaned);if(isNaN(v))return null;v=Math.max(0,Math.min(100,v));return v}
-function formatMargen(){const v=parsePercent(pagoMargenText.value);pagoMargen.value=typeof v==='number'?v:0;suggestionsMargen.value=[{label:'0 %',value:0},{label:'2 %',value:2},{label:'5 %',value:5},{label:'10 %',value:10},{label:'15 %',value:15},{label:'20 %',value:20}]}
-
-function selectSuggestion(type,val){if(type==='min'){priceMin.value=val;priceMinText.value=val.toLocaleString('es-AR');suggestionsMin.value=[]}else if(type==='max'){priceMax.value=val;priceMaxText.value=val.toLocaleString('es-AR');suggestionsMax.value=[]}else if(type==='monto'){pagoMonto.value=val;pagoMontoText.value=val.toLocaleString('es-AR');suggestionsMonto.value=[]}else if(type==='margen'){pagoMargen.value=val;pagoMargenText.value=String(val);suggestionsMargen.value=[]}}
-
-const isCodigoRow=v=>/^[0-9]+$/.test(String(v).trim())
-const toNum=v=>{const str=String(v).replace(/\s/g,'');return parseFloat(str)||null}
-function parsePlanilla(rows,catId){rows.forEach(r=>{if(!r||typeof r!=='object')return;const c3=r['Column3'];if(c3==='Código')return;if(!isCodigoRow(c3))return;productos.push({id:uid(),categoriaId:catId,codigo:c3,nombre:(r['Column4']||'').trim(),valorNominal:toNum(r['Column8']),suscripcion:toNum(r['Column9']),cuota17:toNum(r['Column11']),cuota8mas:toNum(r['Column12']),derechoIngreso:toNum(r['Column13'])})})}
-function importPlanilla(e){const f=e.target.files[0];if(!f)return;e.target.value='';const reader=new FileReader();reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);if(!Array.isArray(data))throw'JSON inválido';const base=f.name.replace(/\.json$/i,'');const catId=base.toLowerCase();if(!categorias.some(c=>c.id===catId))categorias.push({id:catId,nombre:base});parsePlanilla(data,catId);alert('Planilla importada')}catch(err){alert('Error: '+err)}};reader.readAsText(f)}
-function importBase(e){const f=e.target.files[0];if(!f)return;e.target.value='';const reader=new FileReader();reader.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!d.categorias||!d.productos)throw'JSON base inválido';if(!confirm('Esto reemplazará la base actual. ¿Continuar?'))return;categorias.splice(0);productos.splice(0);d.categorias.forEach(c=>categorias.push(c));d.productos.forEach(p=>productos.push(p));alert('Base cargada')}catch(err){alert('Error: '+err)}};reader.readAsText(f)}
-function exportJSON(){const blob=new Blob([JSON.stringify({categorias,productos,settings})],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='base.json';a.click();URL.revokeObjectURL(url)}
-function delProd(id){if(!confirm('¿Seguro que deseas borrar este producto?'))return;const i=productos.findIndex(p=>p.id===id);if(i>-1)productos.splice(i,1)}
-function edit(p){if(editingRow.value===p.id){editingRow.value=null}else{editingRow.value=p.id}}
-function mostrarDetalle(p){selectedProd.value=p;showDetalle.value=true;showPago.value=false}
-function colStyle(k){return settings.col[k]?`width:${settings.col[k]}px`:'auto'}
-function buscarOpcionesPago(){buscado.value=true;resultadosPago.value=[];if(pagoMonto.value==null||pagoMonto.value<=0)return;const margen=isNaN(pagoMargen.value)?0:pagoMargen.value;const rangoInf=pagoMonto.value*(1-margen/100);const rangoSup=pagoMonto.value*(1+margen/100);productos.forEach(p=>{let valor=0;if(pagoTipo.value==='di')valor=p.derechoIngreso;else{const v1=p.cuota17||0;const v2=p.cuota8mas||0;valor=v1&&v2?Math.min(v1,v2):(v1||v2)}if(valor&&valor>=rangoInf&&valor<=rangoSup){const obj=Object.assign({},p);obj.valorMatch=valor;obj.tipoRef=pagoTipo.value==='di'?'Derecho Ingreso':'Cuota';resultadosPago.value.push(obj)}});resultadosPago.value.sort((a,b)=>a.valorMatch-b.valorMatch)}
-onMounted(()=>{window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='Estas por Refrescar la página, los cambios no guardados se perderán.\nPresiona Cancelar para Abortar.'});const keys={cat:0,cod:1,nom:2,val:3,sus:4,c17:5,c8:6,der:7};for(const k in keys){const th=document.querySelectorAll('thead th')[keys[k]];if(!th)return;th.addEventListener('mouseup',()=>{settings.col[k]=th.offsetWidth})}})
-return{settings,fecha,categorias,productos,filtroCat,search,priceMinText,priceMaxText,modoEdicion,showConfig,showDetalle,showPago,showProvincias,showRequisitos,selectedProd,productosOrdenados,fmt,catNombre,changeFont,importPlanilla,importBase,exportJSON,delProd,edit,colStyle,formatPrice,formatMonto,formatMargen,selectSuggestion,suggestionsMin,suggestionsMax,suggestionsMonto,suggestionsMargen,focused,hideSuggestions,mostrarDetalle,sort,sortKey,sortDir,pagoMonto,pagoMontoText,pagoTipo,pagoMargen,pagoMargenText,buscarOpcionesPago,resultadosPago,buscado,reminders,newReminder,addReminder,currentReminder,toggleModoEdicion,editingRow}
-}
-}).mount('#app')
-</script>
+  <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>

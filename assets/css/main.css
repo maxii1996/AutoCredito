@@ -1,0 +1,125 @@
+:root {
+  --font-scale: 1;
+}
+
+html {
+  font-size: calc(16px * var(--font-scale));
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.modal {
+  background: rgba(17, 24, 39, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 40;
+}
+
+.resizable {
+  resize: horizontal;
+  overflow: auto;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  z-index: 50;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  max-height: 12rem;
+  overflow-y: auto;
+  width: 100%;
+  font-size: 0.75rem;
+}
+
+.suggestions li {
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.suggestions li:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.config-modal {
+  width: min(90vw, 48rem);
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.5rem;
+}
+
+.upload-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  border: 2px dashed rgba(79, 70, 229, 0.35);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(30, 64, 175, 0.05));
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.upload-tile:hover {
+  border-color: rgba(79, 70, 229, 0.7);
+  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.15);
+}
+
+.upload-tile input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.app-footer {
+  margin-top: auto;
+  background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+.app-footer__brand {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.app-footer__version {
+  margin-left: auto;
+  text-align: right;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+@media (max-width: 640px) {
+  .app-footer {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .app-footer__version {
+    margin-left: 0;
+    text-align: center;
+  }
+}

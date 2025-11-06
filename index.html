@@ -103,28 +103,20 @@ body::after{content:"";display:block;height:4rem}
 <tr v-for="p in productosOrdenados" :key="p.id" class="border-t hover:bg-gray-50 text-left cursor-pointer" @click="!modoEdicion && mostrarDetalle(p)">
 <td v-if="!settings.hidden.categoria" class="p-3" v-if="editingRow!==p.id">{{catNombre(p.categoriaId)}}</td>
 <td v-if="!settings.hidden.categoria && editingRow===p.id" class="p-3"><input v-model="p.categoriaId" class="border px-1 py-px w-24"></td>
-
 <td v-if="!settings.hidden.codigo && editingRow!==p.id" class="p-3">{{p.codigo}}</td>
 <td v-if="!settings.hidden.codigo && editingRow===p.id" class="p-3"><input v-model="p.codigo" class="border px-1 py-px w-20"></td>
-
 <td v-if="editingRow!==p.id" class="p-3 truncate" :title="p.nombre">{{p.nombre}}</td>
 <td v-if="editingRow===p.id" class="p-3"><input v-model="p.nombre" class="border px-1 py-px w-40"></td>
-
 <td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.valorNominal)"></td>
 <td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.valorNominal" class="border px-1 py-px w-32 text-right"></td>
-
 <td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.suscripcion)"></td>
 <td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.suscripcion" class="border px-1 py-px w-32 text-right"></td>
-
 <td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.cuota17)"></td>
 <td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.cuota17" class="border px-1 py-px w-32 text-right"></td>
-
 <td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.cuota8mas)"></td>
 <td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.cuota8mas" class="border px-1 py-px w-32 text-right"></td>
-
 <td v-if="editingRow!==p.id" class="p-3" v-html="fmt(p.derechoIngreso)"></td>
 <td v-if="editingRow===p.id" class="p-3"><input v-model.number="p.derechoIngreso" class="border px-1 py-px w-32 text-right"></td>
-
 <td v-if="modoEdicion" class="p-3 flex gap-1">
 <button v-if="editingRow!==p.id" @click.stop="edit(p)" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs"><i class="fa-solid fa-pen"></i></button>
 <button v-else @click.stop="edit(p)" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"><i class="fa-solid fa-save"></i></button>
@@ -316,7 +308,10 @@ function hideSuggestions(){setTimeout(()=>{focused.value=null},200)}
 function parseInput(str){const c=str.toLowerCase().replace(/[\.\,\s]+/g,'');const m=c.match(/^(\d+)([a-z]*)$/);if(!m)return{num:null,suggestions:[]};const raw=parseInt(m[1]);let mult=1;const suf=m[2];if(!suf){return{num:null,suggestions:[{label:`${raw} Mil`,value:raw*1000},{label:`${raw} Millones`,value:raw*1000000}]}}if(suf==='k')mult=1000;else if(suf==='kk')mult=1000000;else if(suf.startsWith('mil'))mult=1000;else if(suf.startsWith('m')||suf.startsWith('mill'))mult=1000000;return{num:raw*mult,suggestions:[]}}
 function formatPrice(type){const txt=type==='min'?priceMinText.value:priceMaxText.value;const{num,suggestions}=parseInput(txt);if(type==='min'){priceMin.value=num;suggestionsMin.value=suggestions}else{priceMax.value=num;suggestionsMax.value=suggestions}}
 function formatMonto(){const{num,suggestions}=parseInput(pagoMontoText.value);pagoMonto.value=num;suggestionsMonto.value=suggestions}
-function formatMargen(){const{num,suggestions}=parseInput(pagoMargenText.value);pagoMargen.value=num||0;suggestionsMargen.value=suggestions}
+
+function parsePercent(str){const cleaned=(str||'').toString().toLowerCase().replace(/[^0-9]/g,'');if(cleaned===''){return null}let v=parseInt(cleaned);if(isNaN(v))return null;v=Math.max(0,Math.min(100,v));return v}
+function formatMargen(){const v=parsePercent(pagoMargenText.value);pagoMargen.value=typeof v==='number'?v:0;suggestionsMargen.value=[{label:'0 %',value:0},{label:'2 %',value:2},{label:'5 %',value:5},{label:'10 %',value:10},{label:'15 %',value:15},{label:'20 %',value:20}]}
+
 function selectSuggestion(type,val){if(type==='min'){priceMin.value=val;priceMinText.value=val.toLocaleString('es-AR');suggestionsMin.value=[]}else if(type==='max'){priceMax.value=val;priceMaxText.value=val.toLocaleString('es-AR');suggestionsMax.value=[]}else if(type==='monto'){pagoMonto.value=val;pagoMontoText.value=val.toLocaleString('es-AR');suggestionsMonto.value=[]}else if(type==='margen'){pagoMargen.value=val;pagoMargenText.value=String(val);suggestionsMargen.value=[]}}
 
 const isCodigoRow=v=>/^[0-9]+$/.test(String(v).trim())
@@ -329,7 +324,7 @@ function delProd(id){if(!confirm('¿Seguro que deseas borrar este producto?'))re
 function edit(p){if(editingRow.value===p.id){editingRow.value=null}else{editingRow.value=p.id}}
 function mostrarDetalle(p){selectedProd.value=p;showDetalle.value=true;showPago.value=false}
 function colStyle(k){return settings.col[k]?`width:${settings.col[k]}px`:'auto'}
-function buscarOpcionesPago(){buscado.value=true;resultadosPago.value=[];if(pagoMonto.value==null||pagoMonto.value<=0)return;const rangoInf=pagoMonto.value*(1-pagoMargen.value/100);const rangoSup=pagoMonto.value*(1+pagoMargen.value/100);productos.forEach(p=>{let valor=0;if(pagoTipo.value==='di')valor=p.derechoIngreso;else{const v1=p.cuota17||0;const v2=p.cuota8mas||0;valor=Math.min(v1||v2?v1:v2,v1&&v2?Math.min(v1,v2):v1||v2)}if(valor&&valor>=rangoInf&&valor<=rangoSup){const obj=Object.assign({},p);obj.valorMatch=valor;obj.tipoRef=pagoTipo.value==='di'?'Derecho Ingreso':'Cuota';resultadosPago.value.push(obj)}});resultadosPago.value.sort((a,b)=>a.valorMatch-b.valorMatch)}
+function buscarOpcionesPago(){buscado.value=true;resultadosPago.value=[];if(pagoMonto.value==null||pagoMonto.value<=0)return;const margen=isNaN(pagoMargen.value)?0:pagoMargen.value;const rangoInf=pagoMonto.value*(1-margen/100);const rangoSup=pagoMonto.value*(1+margen/100);productos.forEach(p=>{let valor=0;if(pagoTipo.value==='di')valor=p.derechoIngreso;else{const v1=p.cuota17||0;const v2=p.cuota8mas||0;valor=v1&&v2?Math.min(v1,v2):(v1||v2)}if(valor&&valor>=rangoInf&&valor<=rangoSup){const obj=Object.assign({},p);obj.valorMatch=valor;obj.tipoRef=pagoTipo.value==='di'?'Derecho Ingreso':'Cuota';resultadosPago.value.push(obj)}});resultadosPago.value.sort((a,b)=>a.valorMatch-b.valorMatch)}
 onMounted(()=>{window.addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue='Estas por Refrescar la página, los cambios no guardados se perderán.\nPresiona Cancelar para Abortar.'});const keys={cat:0,cod:1,nom:2,val:3,sus:4,c17:5,c8:6,der:7};for(const k in keys){const th=document.querySelectorAll('thead th')[keys[k]];if(!th)return;th.addEventListener('mouseup',()=>{settings.col[k]=th.offsetWidth})}})
 return{settings,fecha,categorias,productos,filtroCat,search,priceMinText,priceMaxText,modoEdicion,showConfig,showDetalle,showPago,showProvincias,showRequisitos,selectedProd,productosOrdenados,fmt,catNombre,changeFont,importPlanilla,importBase,exportJSON,delProd,edit,colStyle,formatPrice,formatMonto,formatMargen,selectSuggestion,suggestionsMin,suggestionsMax,suggestionsMonto,suggestionsMargen,focused,hideSuggestions,mostrarDetalle,sort,sortKey,sortDir,pagoMonto,pagoMontoText,pagoTipo,pagoMargen,pagoMargenText,buscarOpcionesPago,resultadosPago,buscado,reminders,newReminder,addReminder,currentReminder,toggleModoEdicion,editingRow}
 }

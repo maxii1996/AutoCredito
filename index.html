@@ -80,14 +80,14 @@
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Acciones rápidas</h2>
           <div class="flex flex-wrap items-center gap-3 ml-auto">
             <label class="relative inline-flex items-center gap-2 cursor-pointer">
-              <input type="file" @change="handleBaseUpload" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer">
+              <input type="file" @change="handleBaseUpload" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer" onchange="console.log('native: base input change', this.files)">
               <span class="quick-action" data-variant="import">
                 <i class="fa-solid fa-file-import quick-action__icon"></i>
                 Cargar Base
               </span>
             </label>
             <label class="relative inline-flex items-center gap-2 cursor-pointer">
-              <input type="file" multiple accept=".json" @change="handlePlanillaUpload" class="absolute inset-0 opacity-0 cursor-pointer">
+              <input type="file" multiple accept=".json" @change="handlePlanillaUpload" class="absolute inset-0 opacity-0 cursor-pointer" onchange="console.log('native: planilla input change', this.files)">
               <span class="quick-action" data-variant="upload">
                 <i class="fa-solid fa-cloud-arrow-up quick-action__icon"></i>
                 Cargar Planillas
@@ -649,5 +649,24 @@
   </template>
 
   <script type="module" src="assets/js/app.js"></script>
+  <script>
+    // Función de depuración: crea un input file temporal fuera de Vue y muestra los archivos seleccionados
+    window.debugFilePicker = function () {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.multiple = true;
+      input.style.position = 'fixed';
+      input.style.left = '-9999px';
+      document.body.appendChild(input);
+      input.addEventListener('change', function () {
+        console.log('debugFilePicker change', this.files, 'length', this.files.length);
+        // intentar leer nombre(s)
+        Array.from(this.files).forEach((f) => console.log('debugFilePicker file:', f.name, f.size));
+        document.body.removeChild(input);
+      });
+      input.click();
+    };
+  </script>
 </body>
 </html>

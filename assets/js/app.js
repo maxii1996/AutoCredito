@@ -1,3 +1,4 @@
+console.log('assets/js/app.js loaded');
 const { createApp, reactive, computed, watch, ref, onMounted, onBeforeUnmount, nextTick } = Vue;
 
 import { DEFAULT_SETTINGS, DEFAULT_REMINDERS, BASE_STORAGE_KEY } from './modules/constants.js';
@@ -811,16 +812,20 @@ createApp({
     };
 
     const handlePlanillaUpload = async (event) => {
-      const files = event.target.files;
-      event.target.value = '';
-      if (!files || !files.length) {
-        return;
-      }
-      console.log('Inicio de carga de planillas', {
-        totalArchivos: files.length,
-        nombres: Array.from(files).map((file) => file.name)
-      });
-      const { imported, errors, added } = await dataHandlers.importPlanillas(files);
+      try {
+        const files = event?.target?.files;
+        console.log('handlePlanillaUpload invoked', { hasEvent: !!event, filesLength: files ? files.length : 'no-files-prop', files });
+        if (!files || !files.length) {
+          console.warn('No se detectaron archivos en el input (files.length === 0)');
+          return;
+        }
+        console.log('Inicio de carga de planillas', {
+          totalArchivos: files.length,
+          nombres: Array.from(files).map((file) => file.name)
+        });
+        const { imported, errors, added } = await dataHandlers.importPlanillas(files);
+        // limpiar el valor del input solo después de procesar
+        try { if (event && event.target) event.target.value = ''; } catch (e) { /* ignore */ }
       console.log('Resultado de carga de planillas', { imported, errores: errors, productosAgregados: added });
       if (imported) {
         if (added > 0) {
@@ -840,21 +845,22 @@ createApp({
           });
         }
       }
-      if (errors.length) {
-        addNotification(errors.join('\n'), {
-          type: 'error',
-          title: 'Errores detectados'
-        });
+      } catch (err) {
+        console.error('Error en handlePlanillaUpload', err);
+        addNotification(`Error al procesar archivos: ${err.message || err}`, { type: 'error', title: 'Error' });
       }
     };
 
     const handleBaseUpload = async (event) => {
-      const [file] = event.target.files || [];
-      event.target.value = '';
-      if (!file) {
-        return;
-      }
-      console.log('Inicio de importación de base', { archivo: file.name, tamano: file.size });
+      try {
+        const [file] = event?.target?.files || [];
+        console.log('handleBaseUpload invoked', { hasEvent: !!event, file: file ? file.name : null });
+        if (!file) {
+          console.warn('No se seleccionó archivo para importación de base');
+          return;
+        }
+        // confirmación con el usuario
+        console.log('Inicio de importación de base', { archivo: file.name, tamano: file.size });
       if (!window.confirm('Esto reemplazará la base actual. ¿Continuar?')) {
         console.log('Importación de base cancelada por el usuario');
         return;
@@ -873,11 +879,17 @@ createApp({
           type: 'success',
           title: 'Base actualizada'
         });
+        // limpiar input
+        try { if (event && event.target) event.target.value = ''; } catch (e) { /* ignore */ }
       } else if (error) {
         addNotification(`Error al importar base: ${error}`, {
           type: 'error',
           title: 'Error en la importación'
         });
+      }
+      } catch (err) {
+        console.error('Error en handleBaseUpload', err);
+        addNotification(`Error al importar base: ${err.message || err}`, { type: 'error', title: 'Error' });
       }
     };
 

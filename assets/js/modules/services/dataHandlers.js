@@ -50,26 +50,57 @@ const readFileAsJSON = (file) => new Promise((resolve, reject) => {
   reader.readAsText(file);
 });
 
+const resolveRowValue = (row, keys) => {
+  if (!row) return undefined;
+  // row can be an object with named properties or an array-like object
+  for (const key of keys) {
+    if (row[key] != null) return row[key];
+    // also try lowercase key
+    if (typeof key === 'string' && row[key.toLowerCase()] != null) return row[key.toLowerCase()];
+  }
+  // if row is an array-like, try numeric indices
+  if (Array.isArray(row)) {
+    for (const k of keys) {
+      const idx = Number(k.replace(/[^0-9]/g, ''));
+      if (!Number.isNaN(idx) && row[idx] != null) return row[idx];
+    }
+  }
+  return undefined;
+};
+
 const parsePlanillaRows = (rows, catId, productos, generateId) => {
   let added = 0;
+  if (!Array.isArray(rows)) return 0;
+
   rows.forEach((row) => {
-    if (!row || typeof row !== 'object') {
+    if (!row || (typeof row !== 'object' && !Array.isArray(row))) {
       return;
     }
-    const codigo = row.Column3;
-    if (codigo === 'Código' || !isCodigoRow(codigo)) {
+
+    // Try several candidate keys for the code and other columns to be tolerant
+    const codigo = resolveRowValue(row, ['Column3', 'column3', 'Codigo', 'CÃ³digo', 'Código', 'codigo', '3', '2', '0']);
+    // Skip header-like rows or non-numeric codes
+    if (codigo === 'Código' || codigo === 'Codigo' || !isCodigoRow(codigo)) {
       return;
     }
+
+    const nombre = String(resolveRowValue(row, ['Column4', 'column4', 'Descripción', 'Descripcion', 'descripcion', '4', '3']) || '').trim();
+    const valorNominal = toNumber(resolveRowValue(row, ['Column8', 'column8', 'Valor Nominal', 'Valor', '8', '7']));
+    const suscripcion = toNumber(resolveRowValue(row, ['Column9', 'column9', 'Suscripción', 'Suscripcion', '9', '8']));
+    const cuota17 = toNumber(resolveRowValue(row, ['Column11', 'column11', 'Cuota 1 a 7', '11', '10']));
+    const cuota8mas = toNumber(resolveRowValue(row, ['Column12', 'column12', 'Cuota 8 en adelante', '12', '11']));
+    const derechoIngreso = toNumber(resolveRowValue(row, ['Column13', 'column13', 'Derecho de Ingreso', '13', '12']));
+
     productos.push({
       id: generateId(),
       categoriaId: catId,
       codigo,
-      nombre: (row.Column4 || '').trim(),
-      valorNominal: toNumber(row.Column8),
-      suscripcion: toNumber(row.Column9),
-      cuota17: toNumber(row.Column11),
-      cuota8mas: toNumber(row.Column12),
-      derechoIngreso: toNumber(row.Column13)
+      nombre,
+      valorNominal,
+      suscripcion,
+      cuota17,
+      cuota8mas,
+      derechoIngreso
     });
     added += 1;
   });
@@ -113,14 +144,30 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
       console.log('Procesando planilla', { archivo: file.name, tamano: file.size });
       try {
         const data = await readFileAsJSON(file);
+        // Aceptar arrays o detectar un array dentro de un objeto (caso de formatos distintos)
+        let rows = data;
         if (!Array.isArray(data)) {
-          throw new Error('JSON inválido');
+          // Prefer explicit keys like 'rows' o 'data', si existen
+          if (Array.isArray(data.rows)) {
+            rows = data.rows;
+          } else if (Array.isArray(data.data)) {
+            rows = data.data;
+          } else {
+            // Buscar el primer valor que sea un array
+            const candidate = Object.values(data).find((v) => Array.isArray(v));
+            if (candidate && Array.isArray(candidate)) {
+              rows = candidate;
+            }
+          }
+        }
+        if (!Array.isArray(rows)) {
+          throw new Error('JSON inválido: no contiene un array de filas.');
         }
         const baseName = file.name.replace(/\.json$/i, '');
         const catId = normalizeCategoriaId(file.name);
         ensureCategoria(categorias, catId, baseName);
         console.log('Categoría verificada', { id: catId, nombre: baseName });
-        const added = parsePlanillaRows(data, catId, productos, generateId);
+        const added = parsePlanillaRows(rows, catId, productos, generateId);
         console.log('Filas procesadas', { archivo: file.name, productosAgregados: added });
         totalAdded += added;
         imported += 1;

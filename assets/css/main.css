@@ -425,6 +425,10 @@ body {
   background: linear-gradient(135deg, #2563eb, #7c3aed);
 }
 
+.quick-action[data-variant='upload'] {
+  background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+}
+
 .quick-action[data-variant='export'] {
   background: linear-gradient(135deg, #047857, #10b981);
 }

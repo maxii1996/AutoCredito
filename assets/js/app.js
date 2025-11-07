@@ -473,6 +473,12 @@ createApp({
       const type = options.type || 'info';
       const id = crypto.randomUUID();
       const title = options.title || defaultNotificationTitles[type] || defaultNotificationTitles.info;
+      console.log('[Notificación]', {
+        tipo: type,
+        titulo: title,
+        mensaje: message,
+        opciones: { ...options, id }
+      });
       const formattedMessage = String(message ?? '')
         .replace(/\r\n/g, '\n')
         .replace(/\n/g, '<br>');
@@ -810,7 +816,12 @@ createApp({
       if (!files || !files.length) {
         return;
       }
+      console.log('Inicio de carga de planillas', {
+        totalArchivos: files.length,
+        nombres: Array.from(files).map((file) => file.name)
+      });
       const { imported, errors, added } = await dataHandlers.importPlanillas(files);
+      console.log('Resultado de carga de planillas', { imported, errores: errors, productosAgregados: added });
       if (imported) {
         if (added > 0) {
           const planillasLabel = imported === 1 ? 'planilla procesada' : `${imported} planillas procesadas`;
@@ -843,10 +854,18 @@ createApp({
       if (!file) {
         return;
       }
+      console.log('Inicio de importación de base', { archivo: file.name, tamano: file.size });
       if (!window.confirm('Esto reemplazará la base actual. ¿Continuar?')) {
+        console.log('Importación de base cancelada por el usuario');
         return;
       }
       const { success, error, categorias: categoriasCount, productos: productosCount } = await dataHandlers.importBase(file);
+      console.log('Resultado de importación de base', {
+        exito: success,
+        error,
+        categoriasImportadas: categoriasCount,
+        productosImportados: productosCount
+      });
       if (success) {
         const detalleCategorias = categoriasCount === 1 ? '1 categoría' : `${categoriasCount} categorías`;
         const detalleProductos = productosCount === 1 ? '1 producto' : `${productosCount} productos`;

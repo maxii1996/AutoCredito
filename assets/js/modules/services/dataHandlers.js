@@ -110,6 +110,7 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
     let totalAdded = 0;
 
     for (const file of files) {
+      console.log('Procesando planilla', { archivo: file.name, tamano: file.size });
       try {
         const data = await readFileAsJSON(file);
         if (!Array.isArray(data)) {
@@ -118,10 +119,13 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
         const baseName = file.name.replace(/\.json$/i, '');
         const catId = normalizeCategoriaId(file.name);
         ensureCategoria(categorias, catId, baseName);
+        console.log('Categoría verificada', { id: catId, nombre: baseName });
         const added = parsePlanillaRows(data, catId, productos, generateId);
+        console.log('Filas procesadas', { archivo: file.name, productosAgregados: added });
         totalAdded += added;
         imported += 1;
       } catch (error) {
+        console.error('Error procesando planilla', { archivo: file.name, detalle: error });
         errors.push(`${file.name}: ${error.message || error}`);
       }
     }
@@ -129,6 +133,12 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
     if (totalAdded > 0) {
       emitChange();
     }
+
+    console.log('Resumen importación planillas', {
+      archivosProcesados: imported,
+      productosAgregados: totalAdded,
+      errores: errors
+    });
 
     return { imported, errors, added: totalAdded };
   };
@@ -144,12 +154,18 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
       productos.splice(0, productos.length);
       data.productos.forEach((producto) => productos.push(producto));
       emitChange();
+      console.log('Base importada correctamente', {
+        categorias: data.categorias.length,
+        productos: data.productos.length,
+        archivo: file.name
+      });
       return {
         success: true,
         categorias: data.categorias.length,
         productos: data.productos.length
       };
     } catch (error) {
+      console.error('Error al importar base', { archivo: file.name, detalle: error });
       return { success: false, error: error.message || String(error) };
     }
   };
@@ -167,6 +183,11 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
     anchor.download = filename;
     anchor.click();
     URL.revokeObjectURL(url);
+    console.log('Exportación generada', {
+      archivo: filename,
+      categorias: payload.categorias.length,
+      productos: payload.productos.length
+    });
   };
 
   const deleteProduct = (id) => {
@@ -174,6 +195,7 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
     if (index > -1) {
       productos.splice(index, 1);
       emitChange();
+      console.log('Producto eliminado', { id });
     }
   };
 

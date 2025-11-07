@@ -6,7 +6,10 @@ export const DEFAULT_SETTINGS = {
     categoria: false,
     codigo: false
   },
-  col: {}
+  col: {},
+  reminders: {
+    duration: 5
+  }
 };
 
 export const DEFAULT_REMINDERS = [

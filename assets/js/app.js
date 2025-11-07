@@ -27,12 +27,33 @@ createApp({
     const storedSettings = loadFromStorage('settings', DEFAULT_SETTINGS);
     const settings = reactive(mergeSettings(DEFAULT_SETTINGS, storedSettings));
 
+    if (!settings.reminders || typeof settings.reminders !== 'object') {
+      settings.reminders = { ...DEFAULT_SETTINGS.reminders };
+    }
+
     watch(settings, (value) => saveToStorage('settings', value), { deep: true });
 
     watch(
       () => settings.font,
       (value) => {
         document.documentElement.style.setProperty('--font-scale', value);
+      },
+      { immediate: true }
+    );
+
+    watch(
+      () => settings.reminders?.duration,
+      (value) => {
+        const fallback = DEFAULT_SETTINGS.reminders.duration;
+        const numeric = Number.parseFloat(value);
+        const sanitized = Number.isFinite(numeric) && numeric > 0 ? Number(numeric.toFixed(1)) : fallback;
+        if (!settings.reminders) {
+          settings.reminders = { duration: sanitized };
+          return;
+        }
+        if (settings.reminders.duration !== sanitized) {
+          settings.reminders.duration = sanitized;
+        }
       },
       { immediate: true }
     );
@@ -54,6 +75,8 @@ createApp({
     const showPago = ref(false);
     const showProvincias = ref(false);
     const showRequisitos = ref(false);
+    const showRedes = ref(false);
+    const showResetConfirm = ref(false);
 
     const selectedProd = ref({});
 
@@ -75,6 +98,7 @@ createApp({
     const buscado = ref(false);
 
     const remindersInterval = ref(null);
+    const reminderPlaying = ref(true);
 
     const notifications = ref([]);
     const notificationTimers = new Map();
@@ -90,6 +114,51 @@ createApp({
       info: 'fa-circle-info',
       warning: 'fa-triangle-exclamation'
     });
+
+    const stopReminderCycle = () => {
+      if (remindersInterval.value) {
+        window.clearInterval(remindersInterval.value);
+        remindersInterval.value = null;
+      }
+    };
+
+    const cycleReminder = (direction = 1) => {
+      const length = reminders.length;
+      if (!length) {
+        currentRemIndex.value = 0;
+        return;
+      }
+      const nextIndex = (currentRemIndex.value + direction + length) % length;
+      currentRemIndex.value = nextIndex;
+    };
+
+    const autoAdvanceReminder = () => cycleReminder(1);
+
+    const startReminderCycle = () => {
+      stopReminderCycle();
+      if (!reminderPlaying.value || !reminders.length) {
+        return;
+      }
+      remindersInterval.value = window.setInterval(autoAdvanceReminder, reminderDurationMs.value);
+    };
+
+    const nextReminder = () => {
+      cycleReminder(1);
+      if (reminderPlaying.value) {
+        startReminderCycle();
+      }
+    };
+
+    const prevReminder = () => {
+      cycleReminder(-1);
+      if (reminderPlaying.value) {
+        startReminderCycle();
+      }
+    };
+
+    const toggleReminderPlayback = () => {
+      reminderPlaying.value = !reminderPlaying.value;
+    };
 
     const redes = reactive([
       {
@@ -187,6 +256,54 @@ createApp({
 
     const currentRemIndex = ref(0);
     const currentReminder = computed(() => (reminders.length ? reminders[currentRemIndex.value] : ''));
+    const reminderDurationMs = computed(() => {
+      const fallback = DEFAULT_SETTINGS.reminders.duration;
+      const duration = Number.parseFloat(settings.reminders?.duration ?? fallback);
+      const valid = Number.isFinite(duration) && duration > 0 ? duration : fallback;
+      return valid * 1000;
+    });
+    const isBaseLoaded = computed(() => productos.length > 0);
+
+    watch(isBaseLoaded, (loaded) => {
+      if (loaded) {
+        return;
+      }
+      showDetalle.value = false;
+      showPago.value = false;
+      modoEdicion.value = false;
+      editingRow.value = null;
+      selectedProd.value = {};
+      filtroCat.value = 'todos';
+      search.value = '';
+      priceMin.value = null;
+      priceMax.value = null;
+      priceMinText.value = '';
+      priceMaxText.value = '';
+      suggestionsMin.value = [];
+      suggestionsMax.value = [];
+      focused.value = null;
+      pagoMonto.value = null;
+      pagoMontoText.value = '';
+      suggestionsMonto.value = [];
+      pagoMargen.value = 5;
+      pagoMargenText.value = '5';
+      suggestionsMargen.value = [];
+      resultadosPago.value = [];
+      buscado.value = false;
+    });
+    const visibleColumnCount = computed(() => {
+      let total = 8;
+      if (settings.hidden?.categoria) {
+        total -= 1;
+      }
+      if (settings.hidden?.codigo) {
+        total -= 1;
+      }
+      if (modoEdicion.value) {
+        total += 1;
+      }
+      return total;
+    });
 
     const generateId = () => crypto.randomUUID();
 
@@ -310,6 +427,43 @@ createApp({
       }
     };
 
+    watch(
+      () => reminders.length,
+      (length) => {
+        if (!length) {
+          currentRemIndex.value = 0;
+          stopReminderCycle();
+          return;
+        }
+        if (currentRemIndex.value >= length) {
+          currentRemIndex.value = 0;
+        }
+        if (reminderPlaying.value) {
+          startReminderCycle();
+        }
+      }
+    );
+
+    watch(
+      () => reminderDurationMs.value,
+      () => {
+        if (reminderPlaying.value && reminders.length) {
+          startReminderCycle();
+        }
+      }
+    );
+
+    watch(
+      () => reminderPlaying.value,
+      (playing) => {
+        if (playing) {
+          startReminderCycle();
+        } else {
+          stopReminderCycle();
+        }
+      }
+    );
+
     const ensureClipboard = () => {
       if (!navigator.clipboard) {
         addNotification('La función de copiado no está disponible en este navegador.', {
@@ -361,6 +515,66 @@ createApp({
           title: 'Acción no completada'
         });
       }
+    };
+
+    const openResetDialog = () => {
+      showResetConfirm.value = true;
+    };
+
+    const cancelReset = () => {
+      showResetConfirm.value = false;
+    };
+
+    const confirmReset = () => {
+      stopReminderCycle();
+      localStorage.removeItem('settings');
+      localStorage.removeItem('reminders');
+      settings.dec = DEFAULT_SETTINGS.dec;
+      settings.simple = DEFAULT_SETTINGS.simple;
+      settings.font = DEFAULT_SETTINGS.font;
+      settings.hidden = { ...DEFAULT_SETTINGS.hidden };
+      settings.col = {};
+      settings.reminders = { ...DEFAULT_SETTINGS.reminders };
+      reminders.splice(0, reminders.length, ...DEFAULT_REMINDERS);
+      categorias.splice(0, categorias.length);
+      productos.splice(0, productos.length);
+      filtroCat.value = 'todos';
+      search.value = '';
+      priceMin.value = null;
+      priceMax.value = null;
+      priceMinText.value = '';
+      priceMaxText.value = '';
+      suggestionsMin.value = [];
+      suggestionsMax.value = [];
+      suggestionsMonto.value = [];
+      suggestionsMargen.value = [];
+      focused.value = null;
+      sortKey.value = null;
+      sortDir.value = 1;
+      modoEdicion.value = false;
+      editingRow.value = null;
+      pagoMonto.value = null;
+      pagoMontoText.value = '';
+      pagoTipo.value = 'di';
+      pagoMargen.value = 5;
+      pagoMargenText.value = '5';
+      resultadosPago.value = [];
+      buscado.value = false;
+      selectedProd.value = {};
+      currentRemIndex.value = 0;
+      reminderPlaying.value = true;
+      showDetalle.value = false;
+      showPago.value = false;
+      showProvincias.value = false;
+      showRequisitos.value = false;
+      showRedes.value = false;
+      showConfig.value = false;
+      showResetConfirm.value = false;
+      startReminderCycle();
+      addNotification('Configuración restablecida a valores de fábrica.', {
+        type: 'success',
+        title: 'Sitio restaurado'
+      });
     };
 
     const formatPrice = (type) => {
@@ -439,6 +653,10 @@ createApp({
       }
       reminders.push(text);
       newReminder.value = '';
+      currentRemIndex.value = reminders.length - 1;
+      if (reminderPlaying.value) {
+        startReminderCycle();
+      }
     };
 
     const sort = (key) => {
@@ -564,11 +782,7 @@ createApp({
         title: 'Bienvenido'
       });
 
-      remindersInterval.value = window.setInterval(() => {
-        if (reminders.length) {
-          currentRemIndex.value = (currentRemIndex.value + 1) % reminders.length;
-        }
-      }, 5000);
+      startReminderCycle();
 
       beforeUnloadHandler = (event) => {
         event.preventDefault();
@@ -591,9 +805,7 @@ createApp({
     });
 
     onBeforeUnmount(() => {
-      if (remindersInterval.value) {
-        window.clearInterval(remindersInterval.value);
-      }
+      stopReminderCycle();
       if (beforeUnloadHandler) {
         window.removeEventListener('beforeunload', beforeUnloadHandler);
       }
@@ -606,6 +818,7 @@ createApp({
       fecha,
       categorias,
       productos,
+      isBaseLoaded,
       redes,
       credenciales,
       notifications,
@@ -619,6 +832,8 @@ createApp({
       showPago,
       showProvincias,
       showRequisitos,
+      showRedes,
+      showResetConfirm,
       selectedProd,
       productosOrdenados,
       fmt,
@@ -630,6 +845,7 @@ createApp({
       delProd,
       edit,
       colStyle,
+      visibleColumnCount,
       formatPrice,
       formatMonto,
       formatMargen,
@@ -654,6 +870,11 @@ createApp({
       newReminder,
       addReminder,
       currentReminder,
+      currentRemIndex,
+      reminderPlaying,
+      nextReminder,
+      prevReminder,
+      toggleReminderPlayback,
       toggleModoEdicion,
       editingRow,
       notificationIcon,
@@ -661,7 +882,10 @@ createApp({
       copyLink,
       copyCredential,
       toggleCredential,
-      secretValue
+      secretValue,
+      openResetDialog,
+      cancelReset,
+      confirmReset
     };
   }
 }).mount('#app');

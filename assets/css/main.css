@@ -19,6 +19,26 @@ body {
   background: rgba(17, 24, 39, 0.65);
   backdrop-filter: blur(2px);
   z-index: 40;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal > div {
+  max-height: calc(100vh - clamp(2rem, 5vw, 5rem));
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.modal > div::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal > div::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.35);
+  border-radius: 9999px;
 }
 
 .redes-modal {

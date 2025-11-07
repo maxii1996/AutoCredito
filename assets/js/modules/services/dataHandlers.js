@@ -4,8 +4,33 @@ const toNumber = (value) => {
   if (value == null || value === '') {
     return null;
   }
-  const sanitized = String(value).replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
-  const parsed = Number.parseFloat(sanitized);
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  const trimmed = String(value).trim();
+  if (!trimmed) {
+    return null;
+  }
+  const collapsed = trimmed.replace(/\s+/g, '');
+  if (/^-?\d+(?:\.\d+)?$/.test(collapsed)) {
+    const parsed = Number.parseFloat(collapsed);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  if (/^-?\d+(?:,\d+)?$/.test(collapsed)) {
+    const parsed = Number.parseFloat(collapsed.replace(',', '.'));
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  if (/^-?\d{1,3}(?:\.\d{3})+(?:,\d+)?$/.test(collapsed)) {
+    const normalized = collapsed.replace(/\./g, '').replace(',', '.');
+    const parsed = Number.parseFloat(normalized);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  if (/^-?\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(collapsed)) {
+    const normalized = collapsed.replace(/,/g, '');
+    const parsed = Number.parseFloat(normalized);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  const parsed = Number.parseFloat(collapsed.replace(/\./g, '').replace(',', '.'));
   return Number.isNaN(parsed) ? null : parsed;
 };
 

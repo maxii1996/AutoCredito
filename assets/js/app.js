@@ -305,7 +305,22 @@ createApp({
       return total;
     });
 
-    const generateId = () => crypto.randomUUID();
+    const generateId = (() => {
+      let fallbackCounter = 0;
+      return () => {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          try {
+            return window.crypto.randomUUID();
+          } catch (error) {
+            // fallback handled below
+          }
+        }
+        fallbackCounter = (fallbackCounter + 1) % Number.MAX_SAFE_INTEGER;
+        const timestamp = Date.now().toString(16);
+        const random = Math.floor(Math.random() * 0xffffffff).toString(16);
+        return `id-${timestamp}-${random}-${fallbackCounter.toString(16)}`;
+      };
+    })();
 
     const dataHandlers = createDataHandlers({
       categorias,

@@ -50,8 +50,29 @@
         </div>
       </nav>
 
-      <div v-if="reminders.length" class="bg-indigo-600 text-white px-6 py-2 text-center text-sm tracking-wide shadow">
-        {{ currentReminder }}
+      <div v-if="reminders.length" class="reminder-banner">
+        <div class="reminder-banner__content">
+          <transition name="reminder-slide" mode="out-in">
+            <p :key="currentRemIndex" class="reminder-banner__message">{{ currentReminder }}</p>
+          </transition>
+        </div>
+        <div class="reminder-banner__controls">
+          <button type="button" class="reminder-banner__button" @click="prevReminder" aria-label="Recordatorio anterior">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <button
+            type="button"
+            class="reminder-banner__button reminder-banner__button--main"
+            @click="toggleReminderPlayback"
+            :aria-label="reminderPlaying ? 'Pausar recordatorios' : 'Reanudar recordatorios'"
+          >
+            <i :class="['fa-solid', reminderPlaying ? 'fa-pause' : 'fa-play']"></i>
+          </button>
+          <button type="button" class="reminder-banner__button" @click="nextReminder" aria-label="Siguiente recordatorio">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+          <span class="reminder-banner__indicator">{{ currentRemIndex + 1 }} / {{ reminders.length }}</span>
+        </div>
       </div>
 
       <main class="flex-1 flex flex-col gap-6 py-6 px-6">
@@ -65,11 +86,20 @@
                 Cargar Base
               </span>
             </label>
-            <button @click="exportJSON" class="quick-action" data-variant="export">
+            <button @click="showRedes = true" class="quick-action" data-variant="social">
+              <i class="fa-solid fa-share-nodes quick-action__icon"></i>
+              Redes y Cuentas
+            </button>
+            <button v-if="isBaseLoaded" @click="exportJSON" class="quick-action" data-variant="export">
               <i class="fa-solid fa-file-export quick-action__icon"></i>
               Exportar Base
             </button>
-            <button @click="showPago = true; showDetalle = false" class="quick-action" data-variant="pay">
+            <button
+              v-if="isBaseLoaded"
+              @click="showPago = true; showDetalle = false"
+              class="quick-action"
+              data-variant="pay"
+            >
               <i class="fa-solid fa-hand-holding-dollar quick-action__icon"></i>
               Búsqueda Pago
             </button>
@@ -84,141 +114,53 @@
           </div>
         </section>
 
-        <section class="bg-white shadow rounded-2xl p-6 flex flex-wrap gap-6 items-end text-sm">
-          <div class="flex flex-col w-48">
-            <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
-              <i class="fa-solid fa-filter text-indigo-500"></i>
-              Categoría
-            </label>
-            <select v-model="filtroCat" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md">
-              <option value="todos">Todas</option>
-              <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
-            </select>
-          </div>
-          <div class="flex flex-col">
-            <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
-              <i class="fa-solid fa-magnifying-glass text-indigo-500"></i>
-              Buscar
-            </label>
-            <input v-model="search" placeholder="Nombre o código" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md w-56">
-          </div>
-          <div class="flex flex-col">
-            <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
-              <i class="fa-solid fa-money-bill-wave text-indigo-500"></i>
-              Valor Nominal
-            </label>
-            <div class="flex gap-3">
-              <div class="flex flex-col relative w-32">
-                <input type="text" v-model="priceMinText" @input="formatPrice('min')" @focus="focused = 'min'" @blur="hideSuggestions" placeholder="Mín" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 text-right">
-                <ul v-if="suggestionsMin.length && focused === 'min'" class="suggestions">
-                  <li v-for="s in suggestionsMin" :key="s.value" @mousedown.prevent="selectSuggestion('min', s.value)">{{ s.label }}</li>
-                </ul>
-              </div>
-              <div class="flex flex-col relative w-32">
-                <input type="text" v-model="priceMaxText" @input="formatPrice('max')" @focus="focused = 'max'" @blur="hideSuggestions" placeholder="Máx" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 text-right">
-                <ul v-if="suggestionsMax.length && focused === 'max'" class="suggestions">
-                  <li v-for="s in suggestionsMax" :key="s.value" @mousedown.prevent="selectSuggestion('max', s.value)">{{ s.label }}</li>
-                </ul>
+        <template v-if="isBaseLoaded">
+          <section class="bg-white shadow rounded-2xl p-6 flex flex-wrap gap-6 items-end text-sm">
+            <div class="flex flex-col w-48">
+              <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
+                <i class="fa-solid fa-filter text-indigo-500"></i>
+                Categoría
+              </label>
+              <select v-model="filtroCat" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md">
+                <option value="todos">Todas</option>
+                <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
+              </select>
+            </div>
+            <div class="flex flex-col">
+              <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
+                <i class="fa-solid fa-magnifying-glass text-indigo-500"></i>
+                Buscar
+              </label>
+              <input v-model="search" placeholder="Nombre o código" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md w-56">
+            </div>
+            <div class="flex flex-col">
+              <label class="font-semibold mb-1 text-gray-700 flex items-center gap-2">
+                <i class="fa-solid fa-money-bill-wave text-indigo-500"></i>
+                Valor Nominal
+              </label>
+              <div class="flex gap-3">
+                <div class="flex flex-col relative w-32">
+                  <input type="text" v-model="priceMinText" @input="formatPrice('min')" @focus="focused = 'min'" @blur="hideSuggestions" placeholder="Mín" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 text-right">
+                  <ul v-if="suggestionsMin.length && focused === 'min'" class="suggestions">
+                    <li v-for="s in suggestionsMin" :key="s.value" @mousedown.prevent="selectSuggestion('min', s.value)">{{ s.label }}</li>
+                  </ul>
+                </div>
+                <div class="flex flex-col relative w-32">
+                  <input type="text" v-model="priceMaxText" @input="formatPrice('max')" @focus="focused = 'max'" @blur="hideSuggestions" placeholder="Máx" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 text-right">
+                  <ul v-if="suggestionsMax.length && focused === 'max'" class="suggestions">
+                    <li v-for="s in suggestionsMax" :key="s.value" @mousedown.prevent="selectSuggestion('max', s.value)">{{ s.label }}</li>
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="flex items-center gap-3 ml-auto">
-            <input type="checkbox" id="edit" v-model="modoEdicion" @change="toggleModoEdicion" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
-            <label for="edit" class="font-semibold text-gray-700 select-none">Modo Edición</label>
-          </div>
-        </section>
+            <div class="flex items-center gap-3 ml-auto">
+              <input type="checkbox" id="edit" v-model="modoEdicion" @change="toggleModoEdicion" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+              <label for="edit" class="font-semibold text-gray-700 select-none">Modo Edición</label>
+            </div>
+          </section>
 
-        <section class="bg-white shadow rounded-2xl p-6 flex flex-col gap-8">
-          <div class="space-y-2">
-            <span class="text-xs font-semibold uppercase tracking-widest text-indigo-500">Zona publicidad</span>
-            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-3">
-              <i class="fa-solid fa-share-nodes text-indigo-500"></i>
-              Nuestras Redes
-            </h2>
-            <p class="text-sm text-gray-500">Accesos directos para compartir con los clientes y potenciar nuestra presencia digital.</p>
-          </div>
-          <div class="resource-grid">
-            <article v-for="network in redes" :key="network.id" class="resource-card">
-              <div class="flex items-center gap-3">
-                <span class="resource-card__icon" :style="{ background: network.gradient }">
-                  <i :class="[network.iconPrefix, network.icon]"></i>
-                </span>
-                <div class="flex-1">
-                  <h3 class="text-base font-semibold text-gray-800">{{ network.name }}</h3>
-                  <p class="text-xs text-gray-500">{{ network.description }}</p>
-                </div>
-              </div>
-              <div class="bg-white/80 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 shadow-inner" v-html="network.display"></div>
-              <div class="resource-card__actions">
-                <a :href="network.url" target="_blank" rel="noopener" class="resource-card__button resource-card__button--primary">
-                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                  Abrir
-                </a>
-                <button type="button" class="resource-card__button resource-card__button--secondary" @click="copyLink(network.url, network.name)" :aria-label="`Copiar enlace de ${network.name}`">
-                  <i class="fa-solid fa-copy"></i>
-                  Copiar enlace
-                </button>
-              </div>
-            </article>
-          </div>
-          <div class="space-y-6">
-            <div class="space-y-2">
-              <span class="text-xs font-semibold uppercase tracking-widest text-indigo-500">Zona información del Team</span>
-              <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-3">
-                <i class="fa-solid fa-user-shield text-indigo-500"></i>
-                Credenciales internas
-              </h3>
-              <p class="text-sm text-gray-500">Mantén esta información protegida y sólo compártela con autorización del equipo.</p>
-            </div>
-            <div class="credential-warning">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Por favor no cambiar los datos sin avisar previamente ya que nos afectará a todos.</span>
-            </div>
-            <div class="grid gap-4 md:grid-cols-2">
-              <article v-for="cred in credenciales" :key="cred.id" class="credential-card">
-                <div class="credential-card__header">
-                  <div class="flex items-center gap-3">
-                    <span class="credential-card__icon" :style="{ background: cred.gradient }">
-                      <i :class="[cred.iconPrefix, cred.icon]"></i>
-                    </span>
-                    <div>
-                      <h4 class="text-base font-semibold text-gray-800">{{ cred.name }}</h4>
-                      <p class="text-xs text-gray-500">{{ cred.subtitle }}</p>
-                    </div>
-                  </div>
-                  <button type="button" class="credential-card__toggle" @click="toggleCredential(cred.id)" :aria-label="cred.revealed ? 'Ocultar credenciales' : 'Mostrar credenciales'">
-                    <i :class="['fa-solid', cred.revealed ? 'fa-eye-slash' : 'fa-eye']"></i>
-                    <span class="ml-2 hidden sm:inline">{{ cred.revealed ? 'Ocultar' : 'Mostrar' }}</span>
-                  </button>
-                </div>
-                <div class="credential-field">
-                  <span class="credential-field__label">Usuario / Mail</span>
-                  <div class="credential-field__value">
-                    <span class="truncate">{{ cred.user }}</span>
-                    <button type="button" @click="copyCredential(cred.id, 'user')" :aria-label="`Copiar usuario de ${cred.name}`">
-                      <i class="fa-solid fa-copy"></i>
-                      Copiar
-                    </button>
-                  </div>
-                </div>
-                <div class="credential-field">
-                  <span class="credential-field__label">Contraseña</span>
-                  <div class="credential-field__value">
-                    <span class="credential-secret">{{ secretValue(cred) }}</span>
-                    <button type="button" @click="copyCredential(cred.id, 'password')" :aria-label="`Copiar contraseña de ${cred.name}`">
-                      <i class="fa-solid fa-key"></i>
-                      Copiar
-                    </button>
-                  </div>
-                </div>
-              </article>
-            </div>
-            <p class="text-xs text-gray-500 text-center">Mensaje: Otras Redes ya iremos poniendo próximamente.</p>
-          </div>
-        </section>
-
-        <section class="table-wrapper bg-white shadow rounded-2xl">
-          <table class="min-w-full text-sm whitespace-nowrap table-fixed">
+          <section class="table-wrapper bg-white shadow rounded-2xl">
+            <table class="min-w-full text-sm whitespace-nowrap table-fixed">
             <thead class="bg-gray-100 text-left text-gray-600 uppercase text-xs tracking-wide">
               <tr>
                 <th v-if="!settings.hidden.categoria" class="p-3 resizable" :style="colStyle('cat')" data-col="cat">
@@ -272,7 +214,7 @@
                 <th v-if="modoEdicion" class="p-3 w-28 text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody v-if="productosOrdenados.length">
               <tr v-for="p in productosOrdenados" :key="p.id" class="border-t border-gray-100 hover:bg-gray-50 text-left cursor-pointer" @click="!modoEdicion && mostrarDetalle(p)">
                 <td v-if="!settings.hidden.categoria && editingRow !== p.id" class="p-3">{{ catNombre(p.categoriaId) }}</td>
                 <td v-if="!settings.hidden.categoria && editingRow === p.id" class="p-3">
@@ -321,8 +263,24 @@
                 </td>
               </tr>
             </tbody>
+            <tbody v-else>
+              <tr>
+                <td :colspan="visibleColumnCount" class="p-6 text-center text-sm text-gray-500">No se encontraron resultados para los filtros seleccionados.</td>
+              </tr>
+            </tbody>
           </table>
-        </section>
+          </section>
+        </template>
+        <template v-else>
+          <section class="empty-state">
+            <div class="empty-state__icon">
+              <i class="fa-solid fa-database"></i>
+            </div>
+            <h2 class="empty-state__title">Base de datos pendiente</h2>
+            <p class="empty-state__message">Para comenzar, carga el archivo "base.json" del mes correspondiente que contendrá la información requerida para empezar...</p>
+            <p class="empty-state__hint">Una vez cargada, se habilitarán las búsquedas, filtros y exportaciones avanzadas.</p>
+          </section>
+        </template>
       </main>
 
       <div v-if="showConfig" class="fixed inset-0 flex items-center justify-center modal">
@@ -399,6 +357,19 @@
                   </button>
                 </div>
               </div>
+              <div class="reminder-settings">
+                <label class="reminder-settings__label">
+                  <span>Duración por mensaje (seg)</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.5"
+                    v-model.number="settings.reminders.duration"
+                    class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md w-24 text-right"
+                  >
+                </label>
+                <p class="reminder-settings__hint">Define cuánto tiempo permanece visible cada recordatorio antes de avanzar al siguiente.</p>
+              </div>
               <div class="flex gap-2">
                 <input v-model="newReminder" placeholder="Nuevo recordatorio" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 flex-1 text-sm">
                 <button @click="addReminder" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
@@ -406,6 +377,16 @@
                 </button>
               </div>
             </div>
+          </div>
+          <div class="config-reset-card">
+            <div>
+              <h3 class="config-reset-card__title">Restablecer sitio</h3>
+              <p class="config-reset-card__description">Elimina configuraciones personalizadas, recordatorios y datos guardados localmente para volver al estado original.</p>
+            </div>
+            <button @click="openResetDialog" class="config-reset-card__button">
+              <i class="fa-solid fa-rotate-right"></i>
+              Restablecer
+            </button>
           </div>
           <button @click="showConfig = false" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold shadow transition">
             Guardar y cerrar
@@ -536,6 +517,133 @@
             <li>Recibo de Sueldo (También sirve que en su extracto bancario diga "Pago Haberes")</li>
             <li>DNI</li>
           </ul>
+        </div>
+      </div>
+
+      <div v-if="showRedes" class="fixed inset-0 flex items-center justify-center modal" @click.self="showRedes = false">
+        <div class="bg-white rounded-3xl w-full max-w-5xl shadow-2xl p-8 relative overflow-hidden redes-modal">
+          <button @click="showRedes = false" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+          <div class="space-y-2 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <span class="h-12 w-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
+                <i class="fa-solid fa-share-nodes"></i>
+              </span>
+              Redes y Cuentas
+            </h2>
+            <p class="text-sm text-gray-500">Accesos rápidos para compartir con los clientes y administrar las credenciales internas del equipo.</p>
+          </div>
+          <div class="space-y-12">
+            <section class="space-y-4">
+              <div class="space-y-2">
+                <span class="text-xs font-semibold uppercase tracking-widest text-indigo-500">Presencia digital</span>
+                <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-3">
+                  <i class="fa-solid fa-signal text-indigo-500"></i>
+                  Nuestras Redes
+                </h3>
+                <p class="text-sm text-gray-500">Comparte estos enlaces con los clientes y potenciá la visibilidad de la sucursal.</p>
+              </div>
+              <div class="resource-grid">
+                <article v-for="network in redes" :key="network.id" class="resource-card">
+                  <div class="flex items-center gap-3">
+                    <span class="resource-card__icon" :style="{ background: network.gradient }">
+                      <i :class="[network.iconPrefix, network.icon]"></i>
+                    </span>
+                    <div class="flex-1">
+                      <h3 class="text-base font-semibold text-gray-800">{{ network.name }}</h3>
+                      <p class="text-xs text-gray-500">{{ network.description }}</p>
+                    </div>
+                  </div>
+                  <div class="bg-white/80 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 shadow-inner" v-html="network.display"></div>
+                  <div class="resource-card__actions">
+                    <a :href="network.url" target="_blank" rel="noopener" class="resource-card__button resource-card__button--primary">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                      Abrir
+                    </a>
+                    <button type="button" class="resource-card__button resource-card__button--secondary" @click="copyLink(network.url, network.name)" :aria-label="`Copiar enlace de ${network.name}`">
+                      <i class="fa-solid fa-copy"></i>
+                      Copiar enlace
+                    </button>
+                  </div>
+                </article>
+              </div>
+            </section>
+            <section class="space-y-4">
+              <div class="space-y-2">
+                <span class="text-xs font-semibold uppercase tracking-widest text-indigo-500">Información interna</span>
+                <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-3">
+                  <i class="fa-solid fa-user-shield text-indigo-500"></i>
+                  Credenciales internas
+                </h3>
+                <p class="text-sm text-gray-500">Utilizá estas cuentas con responsabilidad y avisá ante cualquier actualización.</p>
+              </div>
+              <div class="credential-warning">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Por favor no cambiar los datos sin avisar previamente ya que nos afectará a todos.</span>
+              </div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <article v-for="cred in credenciales" :key="cred.id" class="credential-card">
+                  <div class="credential-card__header">
+                    <div class="flex items-center gap-3">
+                      <span class="credential-card__icon" :style="{ background: cred.gradient }">
+                        <i :class="[cred.iconPrefix, cred.icon]"></i>
+                      </span>
+                      <div>
+                        <h4 class="text-base font-semibold text-gray-800">{{ cred.name }}</h4>
+                        <p class="text-xs text-gray-500">{{ cred.subtitle }}</p>
+                      </div>
+                    </div>
+                    <button type="button" class="credential-card__toggle" @click="toggleCredential(cred.id)" :aria-label="cred.revealed ? 'Ocultar credenciales' : 'Mostrar credenciales'">
+                      <i :class="['fa-solid', cred.revealed ? 'fa-eye-slash' : 'fa-eye']"></i>
+                      <span class="ml-2 hidden sm:inline">{{ cred.revealed ? 'Ocultar' : 'Mostrar' }}</span>
+                    </button>
+                  </div>
+                  <div class="credential-field">
+                    <span class="credential-field__label">Usuario / Mail</span>
+                    <div class="credential-field__value">
+                      <span class="truncate">{{ cred.user }}</span>
+                      <button type="button" @click="copyCredential(cred.id, 'user')" :aria-label="`Copiar usuario de ${cred.name}`">
+                        <i class="fa-solid fa-copy"></i>
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+                  <div class="credential-field">
+                    <span class="credential-field__label">Contraseña</span>
+                    <div class="credential-field__value">
+                      <span class="credential-secret">{{ secretValue(cred) }}</span>
+                      <button type="button" @click="copyCredential(cred.id, 'password')" :aria-label="`Copiar contraseña de ${cred.name}`">
+                        <i class="fa-solid fa-key"></i>
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+              <p class="text-xs text-gray-500 text-center">Otras redes se irán agregando próximamente.</p>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="showResetConfirm" class="fixed inset-0 flex items-center justify-center modal" @click.self="cancelReset">
+        <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative space-y-5 reset-modal">
+          <button @click="cancelReset" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+          <div class="space-y-2">
+            <h3 class="text-xl font-semibold text-gray-800">Restablecer el sitio</h3>
+            <p class="text-sm text-gray-600 leading-relaxed">Se eliminarán las configuraciones personalizadas, los recordatorios y cualquier base cargada en este navegador. Esta acción no se puede deshacer.</p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-amber-700 flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+            <span>Confirmá únicamente si deseás volver al estado original del sistema.</span>
+          </div>
+          <div class="flex flex-wrap gap-3 justify-end">
+            <button @click="cancelReset" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+            <button @click="confirmReset" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold shadow hover:bg-red-700 transition">Aceptar y restablecer</button>
+          </div>
         </div>
       </div>
 

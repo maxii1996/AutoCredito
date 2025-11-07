@@ -1,3 +1,5 @@
+export const BASE_STORAGE_KEY = 'ac-base-data';
+
 export const DEFAULT_SETTINGS = {
   dec: true,
   simple: false,

@@ -51,6 +51,7 @@ const readFileAsJSON = (file) => new Promise((resolve, reject) => {
 });
 
 const parsePlanillaRows = (rows, catId, productos, generateId) => {
+  let added = 0;
   rows.forEach((row) => {
     if (!row || typeof row !== 'object') {
       return;
@@ -70,7 +71,9 @@ const parsePlanillaRows = (rows, catId, productos, generateId) => {
       cuota8mas: toNumber(row.Column12),
       derechoIngreso: toNumber(row.Column13)
     });
+    added += 1;
   });
+  return added;
 };
 
 const ensureCategoria = (categorias, catId, nombre) => {
@@ -89,7 +92,13 @@ const toPlainSettings = (settings) => {
   }
 };
 
-export const createDataHandlers = ({ categorias, productos, generateId, getSettings }) => {
+export const createDataHandlers = ({ categorias, productos, generateId, getSettings, onDataChange }) => {
+  const emitChange = () => {
+    if (typeof onDataChange === 'function') {
+      onDataChange();
+    }
+  };
+
   const importPlanillas = async (fileList) => {
     const files = Array.from(fileList || []);
     if (!files.length) {
@@ -98,6 +107,7 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
 
     const errors = [];
     let imported = 0;
+    let totalAdded = 0;
 
     for (const file of files) {
       try {
@@ -108,14 +118,19 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
         const baseName = file.name.replace(/\.json$/i, '');
         const catId = normalizeCategoriaId(file.name);
         ensureCategoria(categorias, catId, baseName);
-        parsePlanillaRows(data, catId, productos, generateId);
+        const added = parsePlanillaRows(data, catId, productos, generateId);
+        totalAdded += added;
         imported += 1;
       } catch (error) {
         errors.push(`${file.name}: ${error.message || error}`);
       }
     }
 
-    return { imported, errors };
+    if (totalAdded > 0) {
+      emitChange();
+    }
+
+    return { imported, errors, added: totalAdded };
   };
 
   const importBase = async (file) => {
@@ -128,7 +143,12 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
       data.categorias.forEach((categoria) => categorias.push(categoria));
       productos.splice(0, productos.length);
       data.productos.forEach((producto) => productos.push(producto));
-      return { success: true };
+      emitChange();
+      return {
+        success: true,
+        categorias: data.categorias.length,
+        productos: data.productos.length
+      };
     } catch (error) {
       return { success: false, error: error.message || String(error) };
     }
@@ -153,6 +173,7 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
     const index = productos.findIndex((producto) => producto.id === id);
     if (index > -1) {
       productos.splice(index, 1);
+      emitChange();
     }
   };
 

@@ -1,6 +1,6 @@
 const { createApp, reactive, computed, watch, ref, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import { DEFAULT_SETTINGS, DEFAULT_REMINDERS } from './modules/constants.js';
+import { DEFAULT_SETTINGS, DEFAULT_REMINDERS, BASE_STORAGE_KEY } from './modules/constants.js';
 import { loadFromStorage, saveToStorage, mergeSettings } from './modules/utils/storage.js';
 import { createFormatters } from './modules/utils/formatters.js';
 import { parseInput, parsePercent } from './modules/utils/parsers.js';
@@ -24,6 +24,65 @@ createApp({
     const categorias = reactive([]);
     const productos = reactive([]);
 
+    const hydrateCollection = (target, source) => {
+      if (!Array.isArray(source)) {
+        return;
+      }
+      source.forEach((item) => {
+        if (item && typeof item === 'object') {
+          target.push({ ...item });
+        }
+      });
+    };
+
+    const storedBase = loadFromStorage(BASE_STORAGE_KEY, null);
+    if (storedBase && typeof storedBase === 'object') {
+      hydrateCollection(categorias, storedBase.categorias);
+      hydrateCollection(productos, storedBase.productos);
+    }
+
+    let basePersistTimer = null;
+    let basePersistenceEnabled = false;
+
+    const clearBaseTimer = () => {
+      if (basePersistTimer) {
+        window.clearTimeout(basePersistTimer);
+        basePersistTimer = null;
+      }
+    };
+
+    const snapshotBase = () => ({
+      categorias: categorias.map((categoria) => ({ ...categoria })),
+      productos: productos.map((producto) => ({ ...producto }))
+    });
+
+    const persistBase = () => {
+      if (!basePersistenceEnabled) {
+        return;
+      }
+      saveToStorage(BASE_STORAGE_KEY, snapshotBase());
+    };
+
+    const schedulePersistBase = () => {
+      if (!basePersistenceEnabled) {
+        return;
+      }
+      clearBaseTimer();
+      basePersistTimer = window.setTimeout(() => {
+        basePersistTimer = null;
+        persistBase();
+      }, 150);
+    };
+
+    const disableBasePersistence = () => {
+      basePersistenceEnabled = false;
+      clearBaseTimer();
+    };
+
+    const enableBasePersistence = () => {
+      basePersistenceEnabled = true;
+    };
+
     const storedSettings = loadFromStorage('settings', DEFAULT_SETTINGS);
     const settings = reactive(mergeSettings(DEFAULT_SETTINGS, storedSettings));
 
@@ -32,6 +91,11 @@ createApp({
     }
 
     watch(settings, (value) => saveToStorage('settings', value), { deep: true });
+
+    watch(categorias, schedulePersistBase, { deep: true });
+    watch(productos, schedulePersistBase, { deep: true });
+
+    enableBasePersistence();
 
     watch(
       () => settings.font,
@@ -326,7 +390,8 @@ createApp({
       categorias,
       productos,
       generateId,
-      getSettings: () => settings
+      getSettings: () => settings,
+      onDataChange: schedulePersistBase
     });
 
     const catNombre = (id) => categorias.find((categoria) => categoria.id === id)?.nombre || '';
@@ -542,8 +607,10 @@ createApp({
 
     const confirmReset = () => {
       stopReminderCycle();
+      disableBasePersistence();
       localStorage.removeItem('settings');
       localStorage.removeItem('reminders');
+      localStorage.removeItem(BASE_STORAGE_KEY);
       settings.dec = DEFAULT_SETTINGS.dec;
       settings.simple = DEFAULT_SETTINGS.simple;
       settings.font = DEFAULT_SETTINGS.font;
@@ -585,6 +652,7 @@ createApp({
       showRedes.value = false;
       showConfig.value = false;
       showResetConfirm.value = false;
+      enableBasePersistence();
       startReminderCycle();
       addNotification('Configuración restablecida a valores de fábrica.', {
         type: 'success',
@@ -742,13 +810,24 @@ createApp({
       if (!files || !files.length) {
         return;
       }
-      const { imported, errors } = await dataHandlers.importPlanillas(files);
+      const { imported, errors, added } = await dataHandlers.importPlanillas(files);
       if (imported) {
-        const message = imported === 1 ? 'Planilla importada correctamente.' : `Planillas importadas: ${imported}`;
-        addNotification(message, {
-          type: 'success',
-          title: 'Carga completada'
-        });
+        if (added > 0) {
+          const planillasLabel = imported === 1 ? 'planilla procesada' : `${imported} planillas procesadas`;
+          const productosLabel = added === 1 ? '1 producto' : `${added} productos`;
+          addNotification(`${planillasLabel}. Se incorporaron ${productosLabel}.`, {
+            type: 'success',
+            title: 'Carga completada'
+          });
+        } else {
+          const message = imported === 1
+            ? 'La planilla seleccionada no contenía registros nuevos.'
+            : 'Las planillas seleccionadas no contenían registros nuevos.';
+          addNotification(message, {
+            type: 'info',
+            title: 'Sin cambios detectados'
+          });
+        }
       }
       if (errors.length) {
         addNotification(errors.join('\n'), {
@@ -767,9 +846,11 @@ createApp({
       if (!window.confirm('Esto reemplazará la base actual. ¿Continuar?')) {
         return;
       }
-      const { success, error } = await dataHandlers.importBase(file);
+      const { success, error, categorias: categoriasCount, productos: productosCount } = await dataHandlers.importBase(file);
       if (success) {
-        addNotification('Base reemplazada correctamente.', {
+        const detalleCategorias = categoriasCount === 1 ? '1 categoría' : `${categoriasCount} categorías`;
+        const detalleProductos = productosCount === 1 ? '1 producto' : `${productosCount} productos`;
+        addNotification(`Base reemplazada correctamente (${detalleCategorias}, ${detalleProductos}).`, {
           type: 'success',
           title: 'Base actualizada'
         });
@@ -800,6 +881,7 @@ createApp({
       startReminderCycle();
 
       beforeUnloadHandler = (event) => {
+        persistBase();
         event.preventDefault();
         event.returnValue = 'Estás por refrescar la página. Los cambios no guardados se perderán. Presiona Cancelar para permanecer.';
         return event.returnValue;
@@ -821,6 +903,8 @@ createApp({
 
     onBeforeUnmount(() => {
       stopReminderCycle();
+      clearBaseTimer();
+      persistBase();
       if (beforeUnloadHandler) {
         window.removeEventListener('beforeunload', beforeUnloadHandler);
       }

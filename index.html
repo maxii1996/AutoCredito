@@ -14,6 +14,20 @@
 
   <template id="app-template">
     <div class="min-h-screen flex flex-col">
+      <transition-group name="toast" tag="div" class="toast-container">
+        <div v-for="notification in notifications" :key="notification.id" class="toast" :class="`toast--${notification.type}`">
+          <div class="toast__icon">
+            <i :class="['fa-solid', notificationIcon(notification.type)]"></i>
+          </div>
+          <div class="toast__content">
+            <p class="toast__title">{{ notification.title }}</p>
+            <p class="toast__message" v-html="notification.message"></p>
+          </div>
+          <button class="toast__close" @click="dismissNotification(notification.id)" aria-label="Cerrar notificación">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </transition-group>
       <nav class="bg-white/95 backdrop-blur border-b border-gray-200 py-4 px-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between shadow-sm">
         <div class="flex items-center gap-3">
           <div class="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
@@ -46,25 +60,25 @@
           <div class="flex flex-wrap items-center gap-3 ml-auto">
             <label class="relative inline-flex items-center gap-2 cursor-pointer">
               <input type="file" @change="handleBaseUpload" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer">
-              <span class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
-                <i class="fa-solid fa-file-import"></i>
+              <span class="quick-action" data-variant="import">
+                <i class="fa-solid fa-file-import quick-action__icon"></i>
                 Cargar Base
               </span>
             </label>
-            <button @click="exportJSON" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
-              <i class="fa-solid fa-file-export"></i>
+            <button @click="exportJSON" class="quick-action" data-variant="export">
+              <i class="fa-solid fa-file-export quick-action__icon"></i>
               Exportar Base
             </button>
-            <button @click="showPago = true; showDetalle = false" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
-              <i class="fa-solid fa-hand-holding-dollar"></i>
+            <button @click="showPago = true; showDetalle = false" class="quick-action" data-variant="pay">
+              <i class="fa-solid fa-hand-holding-dollar quick-action__icon"></i>
               Búsqueda Pago
             </button>
-            <button @click="showProvincias = true" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
-              <i class="fa-solid fa-map-location-dot"></i>
+            <button @click="showProvincias = true" class="quick-action" data-variant="map">
+              <i class="fa-solid fa-map-location-dot quick-action__icon"></i>
               Provincias Excluidas
             </button>
-            <button @click="showRequisitos = true" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
-              <i class="fa-solid fa-file-circle-check"></i>
+            <button @click="showRequisitos = true" class="quick-action" data-variant="requirements">
+              <i class="fa-solid fa-file-circle-check quick-action__icon"></i>
               Requisitos de Pago
             </button>
           </div>
@@ -111,6 +125,95 @@
           <div class="flex items-center gap-3 ml-auto">
             <input type="checkbox" id="edit" v-model="modoEdicion" @change="toggleModoEdicion" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
             <label for="edit" class="font-semibold text-gray-700 select-none">Modo Edición</label>
+          </div>
+        </section>
+
+        <section class="bg-white shadow rounded-2xl p-6 flex flex-col gap-8">
+          <div class="space-y-2">
+            <span class="text-xs font-semibold uppercase tracking-widest text-indigo-500">Zona publicidad</span>
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-3">
+              <i class="fa-solid fa-share-nodes text-indigo-500"></i>
+              Nuestras Redes
+            </h2>
+            <p class="text-sm text-gray-500">Accesos directos para compartir con los clientes y potenciar nuestra presencia digital.</p>
+          </div>
+          <div class="resource-grid">
+            <article v-for="network in redes" :key="network.id" class="resource-card">
+              <div class="flex items-center gap-3">
+                <span class="resource-card__icon" :style="{ background: network.gradient }">
+                  <i :class="[network.iconPrefix, network.icon]"></i>
+                </span>
+                <div class="flex-1">
+                  <h3 class="text-base font-semibold text-gray-800">{{ network.name }}</h3>
+                  <p class="text-xs text-gray-500">{{ network.description }}</p>
+                </div>
+              </div>
+              <div class="bg-white/80 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 shadow-inner" v-html="network.display"></div>
+              <div class="resource-card__actions">
+                <a :href="network.url" target="_blank" rel="noopener" class="resource-card__button resource-card__button--primary">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  Abrir
+                </a>
+                <button type="button" class="resource-card__button resource-card__button--secondary" @click="copyLink(network.url, network.name)" :aria-label="`Copiar enlace de ${network.name}`">
+                  <i class="fa-solid fa-copy"></i>
+                  Copiar enlace
+                </button>
+              </div>
+            </article>
+          </div>
+          <div class="space-y-6">
+            <div class="space-y-2">
+              <span class="text-xs font-semibold uppercase tracking-widest text-indigo-500">Zona información del Team</span>
+              <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-3">
+                <i class="fa-solid fa-user-shield text-indigo-500"></i>
+                Credenciales internas
+              </h3>
+              <p class="text-sm text-gray-500">Mantén esta información protegida y sólo compártela con autorización del equipo.</p>
+            </div>
+            <div class="credential-warning">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Por favor no cambiar los datos sin avisar previamente ya que nos afectará a todos.</span>
+            </div>
+            <div class="grid gap-4 md:grid-cols-2">
+              <article v-for="cred in credenciales" :key="cred.id" class="credential-card">
+                <div class="credential-card__header">
+                  <div class="flex items-center gap-3">
+                    <span class="credential-card__icon" :style="{ background: cred.gradient }">
+                      <i :class="[cred.iconPrefix, cred.icon]"></i>
+                    </span>
+                    <div>
+                      <h4 class="text-base font-semibold text-gray-800">{{ cred.name }}</h4>
+                      <p class="text-xs text-gray-500">{{ cred.subtitle }}</p>
+                    </div>
+                  </div>
+                  <button type="button" class="credential-card__toggle" @click="toggleCredential(cred.id)" :aria-label="cred.revealed ? 'Ocultar credenciales' : 'Mostrar credenciales'">
+                    <i :class="['fa-solid', cred.revealed ? 'fa-eye-slash' : 'fa-eye']"></i>
+                    <span class="ml-2 hidden sm:inline">{{ cred.revealed ? 'Ocultar' : 'Mostrar' }}</span>
+                  </button>
+                </div>
+                <div class="credential-field">
+                  <span class="credential-field__label">Usuario / Mail</span>
+                  <div class="credential-field__value">
+                    <span class="truncate">{{ cred.user }}</span>
+                    <button type="button" @click="copyCredential(cred.id, 'user')" :aria-label="`Copiar usuario de ${cred.name}`">
+                      <i class="fa-solid fa-copy"></i>
+                      Copiar
+                    </button>
+                  </div>
+                </div>
+                <div class="credential-field">
+                  <span class="credential-field__label">Contraseña</span>
+                  <div class="credential-field__value">
+                    <span class="credential-secret">{{ secretValue(cred) }}</span>
+                    <button type="button" @click="copyCredential(cred.id, 'password')" :aria-label="`Copiar contraseña de ${cred.name}`">
+                      <i class="fa-solid fa-key"></i>
+                      Copiar
+                    </button>
+                  </div>
+                </div>
+              </article>
+            </div>
+            <p class="text-xs text-gray-500 text-center">Mensaje: Otras Redes ya iremos poniendo próximamente.</p>
           </div>
         </section>
 
@@ -283,12 +386,12 @@
               </p>
             </div>
 
-            <div class="bg-gray-50 rounded-xl p-5 space-y-4 max-h-72 overflow-hidden">
+            <div class="bg-gray-50 rounded-xl p-5 space-y-5 reminders-panel">
               <div class="flex items-start justify-between">
                 <span class="font-semibold text-gray-800">Recordatorios</span>
                 <span class="text-xs text-gray-400">{{ reminders.length }} activos</span>
               </div>
-              <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
+              <div class="reminders-list space-y-2 overflow-y-auto pr-2">
                 <div v-for="(r, i) in reminders" :key="i" class="flex items-center gap-2">
                   <input v-model="reminders[i]" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md px-3 py-2 flex-1 text-sm">
                   <button @click="reminders.splice(i, 1)" class="text-red-500 hover:text-red-600 transition">
@@ -312,7 +415,7 @@
 
       <div v-if="showDetalle" class="fixed inset-0 flex items-center justify-center modal" @click.self="showDetalle = false">
         <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl relative overflow-hidden">
-          <button @click="showDetalle = false" class="absolute -top-4 -right-4 bg-red-600 text-white rounded-full p-3 shadow-lg hover:bg-red-700 transition">
+          <button @click="showDetalle = false" class="modal-close modal-close--light">
             <i class="fa-solid fa-xmark"></i>
           </button>
           <div class="bg-gradient-to-r from-indigo-600 to-blue-500 px-8 py-6 text-center text-white text-lg font-semibold">

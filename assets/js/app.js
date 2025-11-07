@@ -76,6 +76,111 @@ createApp({
 
     const remindersInterval = ref(null);
 
+    const notifications = ref([]);
+    const notificationTimers = new Map();
+    const defaultNotificationTitles = Object.freeze({
+      success: 'Operación exitosa',
+      error: 'Algo salió mal',
+      info: 'Información',
+      warning: 'Aviso importante'
+    });
+    const notificationIcons = Object.freeze({
+      success: 'fa-circle-check',
+      error: 'fa-circle-xmark',
+      info: 'fa-circle-info',
+      warning: 'fa-triangle-exclamation'
+    });
+
+    const redes = reactive([
+      {
+        id: 'whatsapp',
+        name: 'WhatsApp',
+        description: 'Contacto directo con la sucursal.',
+        url: 'https://wa.me/5491171531689',
+        display: 'wa.me/5491171531689',
+        icon: 'fa-whatsapp',
+        iconPrefix: 'fa-brands',
+        gradient: 'linear-gradient(135deg, #22c55e, #16a34a)'
+      },
+      {
+        id: 'instagram',
+        name: 'Instagram',
+        description: 'Seguinos para conocer todas las promos.',
+        url: 'https://www.instagram.com/promosautocredito/',
+        display: 'instagram.com/promosautocredito',
+        icon: 'fa-instagram',
+        iconPrefix: 'fa-brands',
+        gradient: 'linear-gradient(135deg, #ec4899, #a855f7)'
+      },
+      {
+        id: 'facebook',
+        name: 'Facebook',
+        description: 'Contenido actualizado para compartir con clientes.',
+        url: 'https://www.facebook.com/share/1BTUC9KkVi/',
+        display: 'facebook.com/share/1BTUC9KkVi/',
+        icon: 'fa-facebook',
+        iconPrefix: 'fa-brands',
+        gradient: 'linear-gradient(135deg, #2563eb, #1d4ed8)'
+      },
+      {
+        id: 'web',
+        name: 'Página Oficial de Autocredito',
+        description: 'Sitio oficial para validar información con clientes.',
+        url: 'https://www.autocredito.com/',
+        display: 'autocredito.com',
+        icon: 'fa-globe',
+        iconPrefix: 'fa-solid',
+        gradient: 'linear-gradient(135deg, #14b8a6, #0ea5e9)'
+      },
+      {
+        id: 'sucursal',
+        name: 'Nuestra Sucursal',
+        description: 'Dirección y horarios de atención en Puerto Madero.',
+        url: 'https://www.google.com/maps/search/?api=1&query=MOREAU+DE+JUSTO+1930+Puerto+Madero',
+        display:
+          'Capital Federal, Capital Federal<br>Agencia Oficial Puerto Madero<br>Moreau de Justo 1930<br>Lun a Vie de 10:00 a 18:00 hs',
+        icon: 'fa-location-dot',
+        iconPrefix: 'fa-solid',
+        gradient: 'linear-gradient(135deg, #f97316, #fb7185)'
+      }
+    ]);
+
+    const credenciales = reactive([
+      {
+        id: 'drive',
+        name: 'Drive del Grupo',
+        subtitle: 'Cuenta Google compartida',
+        user: 'promosautocredito@gmail.com',
+        password: 'puertomadero',
+        icon: 'fa-google-drive',
+        iconPrefix: 'fa-brands',
+        gradient: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
+        revealed: false
+      },
+      {
+        id: 'facebook-group',
+        name: 'Facebook del Grupo',
+        subtitle: 'Acceso administrativo',
+        user: '1171531689',
+        password: 'puertomadero2025',
+        icon: 'fa-facebook',
+        iconPrefix: 'fa-brands',
+        gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+        revealed: false
+      },
+      {
+        id: 'instagram-group',
+        name: 'Instagram del Grupo',
+        subtitle: 'Gestión de publicaciones',
+        user: '1171531689',
+        password: 'puertomadero',
+        icon: 'fa-instagram',
+        iconPrefix: 'fa-brands',
+        gradient: 'linear-gradient(135deg, #ec4899, #d946ef)',
+        revealed: false
+      }
+    ]);
+
     const { fmt } = createFormatters(settings);
 
     const editingRow = ref(null);
@@ -164,6 +269,99 @@ createApp({
       });
       return listado;
     });
+
+    const notificationIcon = (type) => notificationIcons[type] || notificationIcons.info;
+
+    const addNotification = (message, options = {}) => {
+      const type = options.type || 'info';
+      const id = crypto.randomUUID();
+      const title = options.title || defaultNotificationTitles[type] || defaultNotificationTitles.info;
+      const formattedMessage = String(message ?? '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\n/g, '<br>');
+      notifications.value.push({ id, type, title, message: formattedMessage });
+      const duration = Number.isFinite(options.duration) ? options.duration : 5000;
+      if (duration > 0) {
+        const timeout = window.setTimeout(() => dismissNotification(id), duration);
+        notificationTimers.set(id, timeout);
+      }
+    };
+
+    const dismissNotification = (id) => {
+      const index = notifications.value.findIndex((notification) => notification.id === id);
+      if (index > -1) {
+        notifications.value.splice(index, 1);
+      }
+      if (notificationTimers.has(id)) {
+        window.clearTimeout(notificationTimers.get(id));
+        notificationTimers.delete(id);
+      }
+    };
+
+    const maskSecret = (value = '') =>
+      Array.from(String(value)).map((char) => (char === ' ' ? ' ' : '•')).join('');
+
+    const secretValue = (credencial) => (credencial.revealed ? credencial.password : maskSecret(credencial.password));
+
+    const toggleCredential = (id) => {
+      const credencial = credenciales.find((item) => item.id === id);
+      if (credencial) {
+        credencial.revealed = !credencial.revealed;
+      }
+    };
+
+    const ensureClipboard = () => {
+      if (!navigator.clipboard) {
+        addNotification('La función de copiado no está disponible en este navegador.', {
+          type: 'warning',
+          title: 'Copiado no disponible'
+        });
+        return false;
+      }
+      return true;
+    };
+
+    const copyLink = async (url, label) => {
+      if (!ensureClipboard()) {
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        addNotification(`${label} listo para compartir.`, {
+          type: 'success',
+          title: 'Enlace copiado'
+        });
+      } catch (error) {
+        addNotification('No fue posible copiar el enlace. Intenta nuevamente.', {
+          type: 'error',
+          title: 'Acción no completada'
+        });
+      }
+    };
+
+    const copyCredential = async (id, field) => {
+      if (!ensureClipboard()) {
+        return;
+      }
+      const credencial = credenciales.find((item) => item.id === id);
+      if (!credencial) {
+        return;
+      }
+      const value = field === 'password' ? credencial.password : credencial.user;
+      const label = field === 'password' ? 'Contraseña' : 'Usuario';
+      try {
+        await navigator.clipboard.writeText(value);
+        addNotification(`${label} de ${credencial.name} copiado correctamente.`, {
+          type: 'success',
+          title: 'Dato copiado'
+        });
+      } catch (error) {
+        addNotification('No fue posible copiar el dato. Intenta nuevamente.', {
+          type: 'error',
+          title: 'Acción no completada'
+        });
+      }
+    };
 
     const formatPrice = (type) => {
       const text = type === 'min' ? priceMinText.value : priceMaxText.value;
@@ -314,10 +512,16 @@ createApp({
       const { imported, errors } = await dataHandlers.importPlanillas(files);
       if (imported) {
         const message = imported === 1 ? 'Planilla importada correctamente.' : `Planillas importadas: ${imported}`;
-        window.alert(message);
+        addNotification(message, {
+          type: 'success',
+          title: 'Carga completada'
+        });
       }
       if (errors.length) {
-        window.alert(`Errores detectados:\n${errors.join('\n')}`);
+        addNotification(errors.join('\n'), {
+          type: 'error',
+          title: 'Errores detectados'
+        });
       }
     };
 
@@ -332,19 +536,34 @@ createApp({
       }
       const { success, error } = await dataHandlers.importBase(file);
       if (success) {
-        window.alert('Base cargada');
+        addNotification('Base reemplazada correctamente.', {
+          type: 'success',
+          title: 'Base actualizada'
+        });
       } else if (error) {
-        window.alert(`Error: ${error}`);
+        addNotification(`Error al importar base: ${error}`, {
+          type: 'error',
+          title: 'Error en la importación'
+        });
       }
     };
 
     const exportJSON = () => {
       dataHandlers.exportBase();
+      addNotification('Exportación generada correctamente.', {
+        type: 'success',
+        title: 'Archivo listo'
+      });
     };
 
     let beforeUnloadHandler = null;
 
     onMounted(() => {
+      addNotification('Sistema inicializado correctamente.', {
+        type: 'success',
+        title: 'Bienvenido'
+      });
+
       remindersInterval.value = window.setInterval(() => {
         if (reminders.length) {
           currentRemIndex.value = (currentRemIndex.value + 1) % reminders.length;
@@ -378,6 +597,8 @@ createApp({
       if (beforeUnloadHandler) {
         window.removeEventListener('beforeunload', beforeUnloadHandler);
       }
+      notificationTimers.forEach((timer) => window.clearTimeout(timer));
+      notificationTimers.clear();
     });
 
     return {
@@ -385,6 +606,9 @@ createApp({
       fecha,
       categorias,
       productos,
+      redes,
+      credenciales,
+      notifications,
       filtroCat,
       search,
       priceMinText,
@@ -431,7 +655,13 @@ createApp({
       addReminder,
       currentReminder,
       toggleModoEdicion,
-      editingRow
+      editingRow,
+      notificationIcon,
+      dismissNotification,
+      copyLink,
+      copyCredential,
+      toggleCredential,
+      secretValue
     };
   }
 }).mount('#app');

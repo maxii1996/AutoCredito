@@ -51,12 +51,12 @@ function extractCodigoRows(text) {
 }
 
 function extractDescripcionRows(text) {
-  const upper = text
-  const sectionMatch = upper.match(/Descripción\s+Suscripción([\s\S]+)/i)
+  const headerRegex = /Descripci[óo]n\s+Suscripci[óo]n([\s\S]+)/i
+  const sectionMatch = text.match(headerRegex)
   if (!sectionMatch) return []
   const section = sectionMatch[1]
   const rows = []
-  const regex = /([A-ZÁÉÍÓÚÜÑ0-9 ]+?)\s+\$([\d\.\,]+)/g
+  const regex = /(.+?)\s+\$([\d\.\,]+)/g
   let match
   while ((match = regex.exec(section)) !== null) {
     const descripcion = match[1].trim()

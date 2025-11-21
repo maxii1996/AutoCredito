@@ -175,6 +175,134 @@
             </div>
           </section>
 
+          <section class="sheet-panel">
+            <div class="sheet-panel__header">
+              <div class="space-y-1">
+                <p class="sheet-panel__eyebrow">Editor tipo planilla</p>
+                <h3 class="sheet-panel__title">Edición rápida y ordenada</h3>
+                <p class="sheet-panel__hint">Orden automático por código y luego nombre. Usa Enter o ↑/↓ para moverte por la misma columna.</p>
+              </div>
+              <div class="sheet-panel__meta">
+                <span class="sheet-panel__status" :data-active="modoEdicion">{{ modoEdicion ? 'Edición habilitada' : 'Edición bloqueada' }}</span>
+                <div class="sheet-panel__legend" v-if="categorias.length">
+                  <span v-for="c in categorias" :key="c.id" class="sheet-panel__pill" :style="sheetBadgeStyle(c.id)">
+                    {{ c.nombre }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="sheet-panel__table-wrapper">
+              <table class="sheet-table">
+                <thead>
+                  <tr>
+                    <th>Categoria</th>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Valor Nominal</th>
+                    <th>Suscripción</th>
+                    <th>Cuota 1-7</th>
+                    <th>Cuota 8+</th>
+                    <th>Derecho Ingreso</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in planillaProductos" :key="p.id" :style="sheetRowStyle(p.categoriaId)" class="sheet-row" :data-cat="p.categoriaId">
+                    <td>
+                      <div class="sheet-category">
+                        <span class="sheet-category__tag" :style="sheetBadgeStyle(p.categoriaId)">{{ catNombre(p.categoriaId) || 'Sin categoría' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <input
+                        :disabled="!modoEdicion"
+                        class="sheet-input"
+                        v-model="p.codigo"
+                        data-sheet-col="codigo"
+                        :data-sheet-row="p.id"
+                        @keydown="handleSheetKeydown($event, p.id, 'codigo')"
+                      >
+                    </td>
+                    <td>
+                      <input
+                        :disabled="!modoEdicion"
+                        class="sheet-input"
+                        v-model="p.nombre"
+                        data-sheet-col="nombre"
+                        :data-sheet-row="p.id"
+                        @keydown="handleSheetKeydown($event, p.id, 'nombre')"
+                      >
+                    </td>
+                    <td>
+                      <input
+                        :disabled="!modoEdicion"
+                        class="sheet-input sheet-input--number"
+                        type="number"
+                        step="0.01"
+                        inputmode="decimal"
+                        v-model.number="p.valorNominal"
+                        data-sheet-col="valorNominal"
+                        :data-sheet-row="p.id"
+                        @keydown="handleSheetKeydown($event, p.id, 'valorNominal')"
+                      >
+                    </td>
+                    <td>
+                      <input
+                        :disabled="!modoEdicion"
+                        class="sheet-input sheet-input--number"
+                        type="number"
+                        step="0.01"
+                        inputmode="decimal"
+                        v-model.number="p.suscripcion"
+                        data-sheet-col="suscripcion"
+                        :data-sheet-row="p.id"
+                        @keydown="handleSheetKeydown($event, p.id, 'suscripcion')"
+                      >
+                    </td>
+                    <td>
+                      <input
+                        :disabled="!modoEdicion"
+                        class="sheet-input sheet-input--number"
+                        type="number"
+                        step="0.01"
+                        inputmode="decimal"
+                        v-model.number="p.cuota17"
+                        data-sheet-col="cuota17"
+                        :data-sheet-row="p.id"
+                        @keydown="handleSheetKeydown($event, p.id, 'cuota17')"
+                      >
+                    </td>
+                    <td>
+                      <input
+                        :disabled="!modoEdicion"
+                        class="sheet-input sheet-input--number"
+                        type="number"
+                        step="0.01"
+                        inputmode="decimal"
+                        v-model.number="p.cuota8mas"
+                        data-sheet-col="cuota8mas"
+                        :data-sheet-row="p.id"
+                        @keydown="handleSheetKeydown($event, p.id, 'cuota8mas')"
+                      >
+                    </td>
+                    <td>
+                      <input
+                        :disabled="!modoEdicion"
+                        class="sheet-input sheet-input--number"
+                        type="number"
+                        step="0.01"
+                        inputmode="decimal"
+                        v-model.number="p.derechoIngreso"
+                        data-sheet-col="derechoIngreso"
+                        :data-sheet-row="p.id"
+                        @keydown="handleSheetKeydown($event, p.id, 'derechoIngreso')"
+                      >
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <section class="table-wrapper bg-white shadow rounded-2xl">
             <table class="min-w-full text-sm whitespace-nowrap table-fixed">
             <thead class="bg-gray-100 text-left text-gray-600 uppercase text-xs tracking-wide">

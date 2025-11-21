@@ -444,6 +444,9 @@ body {
 .quick-action[data-variant='requirements'] {
   background: linear-gradient(135deg, #f97316, #fb923c);
 }
+.quick-action[data-variant='price'] {
+  background: linear-gradient(135deg, #ec4899, #f472b6);
+}
 .quick-action[data-variant='social'] {
   background: linear-gradient(135deg, #0ea5e9, #6366f1);
 }

@@ -34,6 +34,16 @@ const toNumber = (value) => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+const parseNumberFromPdf = (value) => {
+  if (!value) return null;
+  let str = String(value);
+  str = str.replace(/[^\d\.,]/g, '');
+  str = str.replace(/\./g, '');
+  str = str.replace(/,/g, '.');
+  const parsed = Number.parseFloat(str);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
 const readFileAsJSON = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.onload = (event) => {
@@ -91,12 +101,12 @@ const extractCodigoRows = (text) => {
 };
 
 const extractDescripcionRows = (text) => {
-  const upper = text;
-  const sectionMatch = upper.match(/Descripción\s+Suscripción([\s\S]+)/i);
+  const headerRegex = /Descripci[óo]n\s+Suscripci[óo]n([\s\S]+)/i;
+  const sectionMatch = text.match(headerRegex);
   if (!sectionMatch) return [];
   const section = sectionMatch[1];
   const rows = [];
-  const regex = /([A-ZÁÉÍÓÚÜÑ0-9 ]+?)\s+\$([\d\.\,]+)/g;
+  const regex = /(.+?)\s+\$([\d\.\,]+)/g;
   let match;
   while ((match = regex.exec(section)) !== null) {
     const descripcion = match[1].trim();
@@ -121,11 +131,11 @@ const buildItemsFromPdfText = (text) => {
     items.push({
       codigo: c.codigo || null,
       descripcion: d.descripcion || null,
-      valorNominal: toNumber(c.valorNominalRaw),
-      suscripcion: toNumber(d.suscripcionRaw),
-      cuota1_7: toNumber(c.cuota1_7Raw),
-      cuota_8_adelante: toNumber(c.cuota8AdelanteRaw),
-      derechoIngreso: toNumber(c.derechoIngresoRaw)
+      valorNominal: parseNumberFromPdf(c.valorNominalRaw),
+      suscripcion: parseNumberFromPdf(d.suscripcionRaw),
+      cuota_1_7: parseNumberFromPdf(c.cuota1_7Raw),
+      cuota_8_adelante: parseNumberFromPdf(c.cuota8AdelanteRaw),
+      derechoIngreso: parseNumberFromPdf(c.derechoIngresoRaw)
     });
   }
   return items;
@@ -212,11 +222,11 @@ const importPdfPlanilla = async (file, catId, productos, generateId) => {
       categoriaId: catId,
       codigo,
       nombre: (item.descripcion || '').trim(),
-      valorNominal: toNumber(item.valorNominal),
-      suscripcion: toNumber(item.suscripcion),
-      cuota17: toNumber(item.cuota1_7),
-      cuota8mas: toNumber(item.cuota_8_adelante),
-      derechoIngreso: toNumber(item.derechoIngreso)
+      valorNominal: parseNumberFromPdf(item.valorNominal),
+      suscripcion: parseNumberFromPdf(item.suscripcion),
+      cuota17: parseNumberFromPdf(item.cuota_1_7 ?? item.cuota1_7),
+      cuota8mas: parseNumberFromPdf(item.cuota_8_adelante ?? item.cuota8_adelante),
+      derechoIngreso: parseNumberFromPdf(item.derechoIngreso)
     });
     added += 1;
   });

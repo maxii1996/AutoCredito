@@ -17,8 +17,26 @@ async function extractTextFromPDF(file) {
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum)
     const content = await page.getTextContent()
-    const strings = content.items.map(item => item.str)
-    fullText += strings.join(" ") + "\n"
+    let lastY = null
+    let pageLines = []
+    let currentLine = ""
+    content.items.forEach(item => {
+      const text = item.str
+      const y = item.transform[5]
+      if (lastY === null) {
+        currentLine = text
+      } else {
+        if (Math.abs(y - lastY) > 2) {
+          if (currentLine) pageLines.push(currentLine)
+          currentLine = text
+        } else {
+          currentLine += " " + text
+        }
+      }
+      lastY = y
+    })
+    if (currentLine) pageLines.push(currentLine)
+    fullText += pageLines.join("\n") + "\n"
   }
   return fullText
 }
@@ -34,37 +52,69 @@ function parseNumber(str) {
   return n
 }
 
-function extractCodigoRows(text) {
+function extractCodigoRowsFromLines(lines) {
   const rows = []
-  const regex = /(\d{5})\s+([\d\.\,]+)\s+\$?\s*([\d\.\,]+)\s+\$?\s*([\d\.\,]+)\s+\$?\s*([\d\.\,]+)/g
-  let match
-  while ((match = regex.exec(text)) !== null) {
+  const regex = /(\d{5})\s+([\d\.\,]+)\s+\$([\d\.\,]+)\s+\$([\d\.\,]+)\s+\$([\d\.\,]+)/
+  for (const line of lines) {
+    const m = line.match(regex)
+    if (!m) continue
     rows.push({
-      codigo: match[1],
-      valorNominalRaw: match[2],
-      cuota1_7Raw: match[3],
-      cuota8AdelanteRaw: match[4],
-      derechoIngresoRaw: match[5]
+      codigo: m[1],
+      valorNominalRaw: m[2],
+      cuota1_7Raw: m[3],
+      cuota8AdelanteRaw: m[4],
+      derechoIngresoRaw: m[5]
     })
   }
   return rows
 }
 
-function extractDescripcionRows(text) {
-  const headerRegex = /Descripci[óo]n\s+Suscripci[óo]n([\s\S]+)/i
-  const sectionMatch = text.match(headerRegex)
-  if (!sectionMatch) return []
-  const section = sectionMatch[1]
+function extractDescripcionRowsFromLines(lines) {
   const rows = []
-  const regex = /(.+?)\s+\$([\d\.\,]+)/g
-  let match
-  while ((match = regex.exec(section)) !== null) {
-    const descripcion = match[1].trim()
-    if (!descripcion) continue
-    rows.push({
-      descripcion: descripcion,
-      suscripcionRaw: match[2]
-    })
+  let inProducts = false
+  const headerPattern = /Derecho de ingreso\s+Cuota comercial del mes/i
+  for (let rawLine of lines) {
+    let line = rawLine
+    if (headerPattern.test(line)) {
+      inProducts = true
+      continue
+    }
+    if (!inProducts) continue
+
+    let comboRegex = /(.+?\+)\s+\$([\d\.\,]+)\s+\$([\d\.\,]+)/g
+    let comboMatch
+    let restLine = ""
+    let lastIndex = 0
+    let replacedAny = false
+    while ((comboMatch = comboRegex.exec(line)) !== null) {
+      const desc = comboMatch[1].trim()
+      const suscr = comboMatch[3]
+      rows.push({
+        descripcion: desc,
+        suscripcionRaw: suscr
+      })
+      restLine += line.slice(lastIndex, comboMatch.index)
+      lastIndex = comboRegex.lastIndex
+      replacedAny = true
+    }
+    if (replacedAny) {
+      restLine += line.slice(lastIndex)
+      line = restLine
+    }
+
+    let genericRegex = /(.+?)\s+\$([\d\.\,]+)/g
+    let m
+    while ((m = genericRegex.exec(line)) !== null) {
+      let desc = m[1].trim()
+      const sus = m[2]
+      if (/^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(desc)) continue
+      if (desc.includes("Página")) continue
+      if (desc.includes("Descripci") && desc.includes("Suscripci")) continue
+      rows.push({
+        descripcion: desc,
+        suscripcionRaw: sus
+      })
+    }
   }
   return rows
 }
@@ -105,8 +155,12 @@ async function handleConvert(event) {
   try {
     const text = await extractTextFromPDF(file)
     const normalized = text.replace(/\r/g, "")
-    const codigoRows = extractCodigoRows(normalized)
-    const descripcionRows = extractDescripcionRows(normalized)
+    const lines = normalized
+      .split("\n")
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+    const codigoRows = extractCodigoRowsFromLines(lines)
+    const descripcionRows = extractDescripcionRowsFromLines(lines)
     const items = buildItems(codigoRows, descripcionRows)
     const result = {
       fileName: file.name,

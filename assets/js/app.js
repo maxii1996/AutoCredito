@@ -134,6 +134,30 @@ createApp({
     const priceMinText = ref('');
     const priceMaxText = ref('');
 
+    const showPriceAssistant = ref(false);
+    const assistantCategory = ref('todos');
+    const assistantIndex = ref(0);
+    const assistantForm = reactive({
+      nombre: '',
+      codigo: '',
+      valorNominal: '',
+      suscripcion: '',
+      cuota17: '',
+      cuota8mas: '',
+      derechoIngreso: ''
+    });
+    const assistantNewProduct = reactive({
+      categoriaId: '',
+      nombre: '',
+      codigo: '',
+      valorNominal: '',
+      suscripcion: '',
+      cuota17: '',
+      cuota8mas: '',
+      derechoIngreso: ''
+    });
+    const assistantNewCategory = reactive({ id: '', nombre: '' });
+
     const modoEdicion = ref(false);
     const showConfig = ref(false);
     const showDetalle = ref(false);
@@ -316,6 +340,12 @@ createApp({
     ]);
 
     const { fmt } = createFormatters(settings);
+    const fmtMoneyFixed = (value) => {
+      if (value == null || Number.isNaN(value)) {
+        return '—';
+      }
+      return Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
 
     const editingRow = ref(null);
 
@@ -369,6 +399,51 @@ createApp({
       }
       return total;
     });
+
+    const moneyFields = ['valorNominal', 'suscripcion', 'cuota17', 'cuota8mas', 'derechoIngreso'];
+
+    const toMoney = (value) => {
+      if (value === '' || value == null) {
+        return null;
+      }
+      const numeric = Number.parseFloat(String(value).replace(/,/g, '.'));
+      return Number.isFinite(numeric) ? Number(numeric.toFixed(2)) : null;
+    };
+
+    const formatAssistantForm = (producto = {}) => {
+      assistantForm.nombre = producto.nombre || '';
+      assistantForm.codigo = producto.codigo || '';
+      moneyFields.forEach((field) => {
+        const val = producto[field];
+        assistantForm[field] = val == null || Number.isNaN(val) ? '' : Number(val).toFixed(2);
+      });
+    };
+
+    const assistantProductos = computed(() => {
+      const list = productos.filter((producto) =>
+        assistantCategory.value === 'todos' ? true : producto.categoriaId === assistantCategory.value
+      );
+      return list.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+    });
+
+    const assistantActual = computed(() => assistantProductos.value[assistantIndex.value] || null);
+
+    watch(assistantActual, (producto) => {
+      if (producto) {
+        formatAssistantForm(producto);
+      } else {
+        formatAssistantForm({});
+      }
+    });
+
+    watch(
+      () => assistantProductos.value.length,
+      (len) => {
+        if (assistantIndex.value >= len) {
+          assistantIndex.value = len > 0 ? len - 1 : 0;
+        }
+      }
+    );
 
     const generateId = (() => {
       let fallbackCounter = 0;
@@ -659,6 +734,18 @@ createApp({
       showRedes.value = false;
       showConfig.value = false;
       showResetConfirm.value = false;
+      showPriceAssistant.value = false;
+      assistantCategory.value = 'todos';
+      assistantIndex.value = 0;
+      formatAssistantForm({});
+      assistantNewProduct.categoriaId = '';
+      assistantNewProduct.nombre = '';
+      assistantNewProduct.codigo = '';
+      moneyFields.forEach((field) => {
+        assistantNewProduct[field] = '';
+      });
+      assistantNewCategory.id = '';
+      assistantNewCategory.nombre = '';
       enableBasePersistence();
       startReminderCycle();
       addNotification('Configuración restablecida a valores de fábrica.', {
@@ -771,6 +858,129 @@ createApp({
         return;
       }
       dataHandlers.deleteProduct(id);
+    };
+
+    const openPriceAssistant = () => {
+      if (!isBaseLoaded.value) {
+        addNotification('Primero debes cargar la base para editar precios.', { type: 'warning', title: 'Base pendiente' });
+        return;
+      }
+      assistantCategory.value = categorias[0]?.id || 'todos';
+      assistantIndex.value = 0;
+      showPriceAssistant.value = true;
+      formatAssistantForm(assistantActual.value || {});
+      assistantNewProduct.categoriaId = assistantCategory.value !== 'todos' ? assistantCategory.value : categorias[0]?.id || '';
+    };
+
+    const closePriceAssistant = () => {
+      showPriceAssistant.value = false;
+    };
+
+    const changeAssistantCategory = (id) => {
+      assistantCategory.value = id || 'todos';
+      assistantIndex.value = 0;
+      assistantNewProduct.categoriaId = id || '';
+    };
+
+    const applyAssistantChanges = () => {
+      const producto = assistantActual.value;
+      if (!producto) {
+        return false;
+      }
+      producto.nombre = assistantForm.nombre.trim() || producto.nombre;
+      producto.codigo = assistantForm.codigo || producto.codigo;
+      moneyFields.forEach((field) => {
+        const parsed = toMoney(assistantForm[field]);
+        if (parsed != null) {
+          producto[field] = parsed;
+        }
+      });
+      schedulePersistBase();
+      addNotification('Producto actualizado con éxito.', { type: 'success', title: 'Cambios guardados' });
+      return true;
+    };
+
+    const goAssistant = (direction) => {
+      const total = assistantProductos.value.length;
+      if (!total) {
+        return;
+      }
+      assistantIndex.value = (assistantIndex.value + direction + total) % total;
+    };
+
+    const saveAndNext = () => {
+      const ok = applyAssistantChanges();
+      if (ok) {
+        goAssistant(1);
+      }
+    };
+
+    const deleteAssistantProduct = () => {
+      const producto = assistantActual.value;
+      if (!producto) return;
+      if (!window.confirm('¿Eliminar este producto de la base?')) {
+        return;
+      }
+      dataHandlers.deleteProduct(producto.id);
+      addNotification('Producto eliminado del listado.', { type: 'warning', title: 'Registro eliminado' });
+    };
+
+    const addAssistantCategory = () => {
+      const nombre = assistantNewCategory.nombre.trim();
+      const id = (assistantNewCategory.id || nombre).trim().toLowerCase().replace(/\s+/g, '-');
+      if (!nombre || !id) {
+        addNotification('Debes indicar un nombre y un identificador para la categoría.', {
+          type: 'error',
+          title: 'Datos incompletos'
+        });
+        return;
+      }
+      if (categorias.some((c) => c.id === id)) {
+        addNotification('Ya existe una categoría con ese identificador.', { type: 'warning', title: 'Duplicado' });
+        return;
+      }
+      categorias.push({ id, nombre });
+      assistantNewCategory.id = '';
+      assistantNewCategory.nombre = '';
+      changeAssistantCategory(id);
+      addNotification('Categoría agregada correctamente.', { type: 'success', title: 'Nueva categoría' });
+    };
+
+    const addAssistantProduct = () => {
+      const categoriaId = assistantNewProduct.categoriaId || assistantCategory.value || categorias[0]?.id;
+      if (!categoriaId) {
+        addNotification('Selecciona una categoría antes de agregar un producto.', { type: 'error', title: 'Categoría requerida' });
+        return;
+      }
+      const nombre = assistantNewProduct.nombre.trim();
+      if (!nombre) {
+        addNotification('El producto necesita un nombre.', { type: 'error', title: 'Nombre requerido' });
+        return;
+      }
+      const codigo = assistantNewProduct.codigo.trim() || generateId().slice(0, 6);
+      const nuevoProducto = {
+        id: generateId(),
+        categoriaId,
+        codigo,
+        nombre,
+        valorNominal: toMoney(assistantNewProduct.valorNominal) ?? 0,
+        suscripcion: toMoney(assistantNewProduct.suscripcion) ?? 0,
+        cuota17: toMoney(assistantNewProduct.cuota17) ?? 0,
+        cuota8mas: toMoney(assistantNewProduct.cuota8mas) ?? 0,
+        derechoIngreso: toMoney(assistantNewProduct.derechoIngreso) ?? 0
+      };
+      productos.push(nuevoProducto);
+      changeAssistantCategory(categoriaId);
+      moneyFields.forEach((field) => {
+        assistantNewProduct[field] = '';
+      });
+      assistantNewProduct.nombre = '';
+      assistantNewProduct.codigo = '';
+      nextTick(() => {
+        const pos = assistantProductos.value.findIndex((p) => p.id === nuevoProducto.id);
+        assistantIndex.value = pos >= 0 ? pos : 0;
+      });
+      addNotification('Producto agregado al listado.', { type: 'success', title: 'Nuevo producto' });
     };
 
     const mostrarDetalle = (producto) => {
@@ -964,9 +1174,18 @@ createApp({
       showRequisitos,
       showRedes,
       showResetConfirm,
+      showPriceAssistant,
+      assistantCategory,
+      assistantIndex,
+      assistantProductos,
+      assistantActual,
+      assistantForm,
+      assistantNewProduct,
+      assistantNewCategory,
       selectedProd,
       productosOrdenados,
       fmt,
+      fmtMoneyFixed,
       catNombre,
       changeFont,
       handlePlanillaUpload,
@@ -1007,6 +1226,15 @@ createApp({
       toggleReminderPlayback,
       toggleModoEdicion,
       editingRow,
+      openPriceAssistant,
+      closePriceAssistant,
+      changeAssistantCategory,
+      applyAssistantChanges,
+      goAssistant,
+      saveAndNext,
+      deleteAssistantProduct,
+      addAssistantCategory,
+      addAssistantProduct,
       notificationIcon,
       dismissNotification,
       copyLink,

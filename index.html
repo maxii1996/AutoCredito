@@ -103,6 +103,15 @@
             </button>
             <button
               v-if="isBaseLoaded"
+              @click="openPriceAssistant"
+              class="quick-action"
+              data-variant="edit"
+            >
+              <i class="fa-solid fa-wand-magic-sparkles quick-action__icon"></i>
+              Asistente de Precios
+            </button>
+            <button
+              v-if="isBaseLoaded"
               @click="showPago = true; showDetalle = false"
               class="quick-action"
               data-variant="pay"
@@ -410,6 +419,254 @@
               <p class="text-emerald-700">Las primeras 7 cuotas fijas serían de <span class="font-bold" v-html="fmt(selectedProd.cuota17)"></span>.</p>
               <p class="text-emerald-700">A partir de la cuota 8 empezaría a pagar solamente <span class="font-bold" v-html="fmt(selectedProd.cuota8mas)"></span>.</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="showPriceAssistant"
+        class="fixed inset-0 flex items-center justify-center modal"
+        @click.self="closePriceAssistant"
+      >
+        <div class="bg-white rounded-3xl w-full max-w-6xl shadow-2xl relative p-6 space-y-6">
+          <button @click="closePriceAssistant" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+          <div class="flex flex-col gap-3">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <span class="h-12 w-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-200">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </span>
+              Asistente de actualización de precios
+            </h2>
+            <p class="text-sm text-gray-500">Recorre cada producto, ajusta valores con 2 decimales, crea nuevos registros y exporta la base actualizada.</p>
+          </div>
+          <div class="grid gap-4 lg:grid-cols-[280px,1fr]">
+            <aside class="bg-gray-50 rounded-2xl p-4 space-y-4 border border-gray-100">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-gray-500">Categorías</p>
+                  <p class="text-sm font-semibold text-gray-800">{{ assistantProductos.length }} productos</p>
+                </div>
+                <button
+                  type="button"
+                  class="h-9 w-9 flex items-center justify-center rounded-lg bg-white shadow border border-gray-200 hover:border-emerald-500 hover:text-emerald-600"
+                  @click="changeAssistantCategory('todos')"
+                  :aria-pressed="assistantCategory === 'todos'"
+                >
+                  <i class="fa-solid fa-layer-group"></i>
+                </button>
+              </div>
+              <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <button
+                  v-for="c in categorias"
+                  :key="c.id"
+                  type="button"
+                  class="w-full text-left p-3 rounded-xl border border-transparent hover:border-emerald-500 hover:bg-white transition flex items-center justify-between"
+                  :class="assistantCategory === c.id ? 'bg-white border-emerald-500 shadow-sm' : 'bg-gray-100'"
+                  @click="changeAssistantCategory(c.id)"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold">
+                      {{ c.nombre.charAt(0).toUpperCase() }}
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-gray-800">{{ c.nombre }}</p>
+                      <p class="text-xs text-gray-500">{{ productos.filter(p => p.categoriaId === c.id).length }} productos</p>
+                    </div>
+                  </div>
+                  <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                </button>
+              </div>
+              <div class="space-y-2">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Nueva categoría</p>
+                <input v-model="assistantNewCategory.nombre" placeholder="Nombre visible" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md w-full text-sm" />
+                <input v-model="assistantNewCategory.id" placeholder="Identificador (opcional)" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md w-full text-sm" />
+                <button
+                  type="button"
+                  class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-sm font-semibold shadow"
+                  @click="addAssistantCategory"
+                >
+                  Crear categoría
+                </button>
+              </div>
+              <div class="border-t border-gray-200 pt-3 space-y-2">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Exportar</p>
+                <button
+                  type="button"
+                  class="w-full bg-gray-900 hover:bg-gray-700 text-white py-2 rounded-lg text-sm font-semibold"
+                  @click="exportJSON"
+                >
+                  Descargar base actualizada
+                </button>
+              </div>
+            </aside>
+            <section class="space-y-4">
+              <div v-if="assistantProductos.length" class="bg-gray-50 rounded-2xl p-4 flex flex-col gap-3 border border-gray-100">
+                <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Producto {{ assistantIndex + 1 }} de {{ assistantProductos.length }}</p>
+                    <h3 class="text-lg font-bold text-gray-800">{{ assistantActual ? assistantActual.nombre : 'Sin nombre' }}</h3>
+                    <p class="text-sm text-gray-500">Código: {{ assistantActual ? assistantActual.codigo : '—' }}</p>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button type="button" class="h-10 px-3 rounded-lg border border-gray-300 text-gray-700 hover:border-emerald-500" @click="goAssistant(-1)">
+                      <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button type="button" class="h-10 px-3 rounded-lg border border-gray-300 text-gray-700 hover:border-emerald-500" @click="goAssistant(1)">
+                      <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <button type="button" class="h-10 px-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700" @click="applyAssistantChanges">
+                      Guardar cambios
+                    </button>
+                    <button type="button" class="h-10 px-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700" @click="saveAndNext">
+                      Guardar y siguiente
+                    </button>
+                    <button type="button" class="h-10 px-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700" @click="deleteAssistantProduct">
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                  <label class="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                    Nombre
+                    <input v-model="assistantForm.nombre" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2" />
+                  </label>
+                  <label class="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                    Código
+                    <input v-model="assistantForm.codigo" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2" />
+                  </label>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div class="p-4 rounded-xl bg-white border border-gray-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-500">Valor Nominal Anterior</span>
+                      <span class="text-base font-semibold text-gray-800">{{ fmtMoneyFixed(assistantActual ? assistantActual.valorNominal : null) }}</span>
+                    </div>
+                    <label class="text-sm font-medium text-gray-700">Valor Nominal Nuevo</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      v-model="assistantForm.valorNominal"
+                      class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right"
+                    />
+                  </div>
+                  <div class="p-4 rounded-xl bg-white border border-gray-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-500">Suscripción Anterior</span>
+                      <span class="text-base font-semibold text-gray-800">{{ fmtMoneyFixed(assistantActual ? assistantActual.suscripcion : null) }}</span>
+                    </div>
+                    <label class="text-sm font-medium text-gray-700">Suscripción Nueva</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      v-model="assistantForm.suscripcion"
+                      class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right"
+                    />
+                  </div>
+                  <div class="p-4 rounded-xl bg-white border border-gray-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-500">Cuota 1-7 Anterior</span>
+                      <span class="text-base font-semibold text-gray-800">{{ fmtMoneyFixed(assistantActual ? assistantActual.cuota17 : null) }}</span>
+                    </div>
+                    <label class="text-sm font-medium text-gray-700">Cuota 1-7 Nueva</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      v-model="assistantForm.cuota17"
+                      class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right"
+                    />
+                  </div>
+                  <div class="p-4 rounded-xl bg-white border border-gray-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-500">Cuota 8+ Anterior</span>
+                      <span class="text-base font-semibold text-gray-800">{{ fmtMoneyFixed(assistantActual ? assistantActual.cuota8mas : null) }}</span>
+                    </div>
+                    <label class="text-sm font-medium text-gray-700">Cuota 8+ Nueva</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      v-model="assistantForm.cuota8mas"
+                      class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right"
+                    />
+                  </div>
+                  <div class="p-4 rounded-xl bg-white border border-gray-200 space-y-3 md:col-span-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-500">Derecho Ingreso Anterior</span>
+                      <span class="text-base font-semibold text-gray-800">{{ fmtMoneyFixed(assistantActual ? assistantActual.derechoIngreso : null) }}</span>
+                    </div>
+                    <label class="text-sm font-medium text-gray-700">Derecho Ingreso Nuevo</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      v-model="assistantForm.derechoIngreso"
+                      class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div v-else class="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-2xl">
+                No hay productos en la categoría seleccionada. Agrega un nuevo producto para comenzar.
+              </div>
+
+              <div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Alta rápida</p>
+                    <h4 class="text-lg font-semibold text-gray-800">Agregar nuevo producto</h4>
+                  </div>
+                  <span class="text-xs text-gray-500">Valores con 2 decimales obligatorios</span>
+                </div>
+                <div class="grid gap-3 md:grid-cols-3">
+                  <label class="text-sm font-medium text-gray-700 flex flex-col gap-1">
+                    Categoría
+                    <select v-model="assistantNewProduct.categoriaId" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2">
+                      <option value="" disabled>Selecciona</option>
+                      <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
+                    </select>
+                  </label>
+                  <label class="text-sm font-medium text-gray-700 flex flex-col gap-1">
+                    Nombre
+                    <input v-model="assistantNewProduct.nombre" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2" />
+                  </label>
+                  <label class="text-sm font-medium text-gray-700 flex flex-col gap-1">
+                    Código
+                    <input v-model="assistantNewProduct.codigo" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2" />
+                  </label>
+                </div>
+                <div class="grid gap-3 md:grid-cols-5">
+                  <label class="text-sm font-medium text-gray-700 flex flex-col gap-1">
+                    Valor Nominal
+                    <input type="number" step="0.01" v-model="assistantNewProduct.valorNominal" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right" />
+                  </label>
+                  <label class="text-sm font-medium text-gray-700 flex flex-col gap-1">
+                    Suscripción
+                    <input type="number" step="0.01" v-model="assistantNewProduct.suscripcion" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right" />
+                  </label>
+                  <label class="text-sm font-medium text-gray-700 flex flex-col gap-1">
+                    Cuota 1-7
+                    <input type="number" step="0.01" v-model="assistantNewProduct.cuota17" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right" />
+                  </label>
+                  <label class="text-sm font-medium text-gray-700 flex flex-col gap-1">
+                    Cuota 8+
+                    <input type="number" step="0.01" v-model="assistantNewProduct.cuota8mas" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right" />
+                  </label>
+                  <label class="text-sm font-medium text-gray-700 flex flex-col gap-1">
+                    Derecho Ingreso
+                    <input type="number" step="0.01" v-model="assistantNewProduct.derechoIngreso" class="border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md px-3 py-2 text-right" />
+                  </label>
+                </div>
+                <div class="flex justify-end">
+                  <button
+                    type="button"
+                    class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700"
+                    @click="addAssistantProduct"
+                  >
+                    Guardar nuevo producto
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </div>

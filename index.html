@@ -6,6 +6,12 @@
   <title>Gestor de Productos | Auto Crédito</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/main.css">
 </head>
@@ -87,7 +93,7 @@
               </span>
             </label>
             <label class="relative inline-flex items-center gap-2 cursor-pointer">
-              <input type="file" multiple accept=".json" @change="handlePlanillaUpload" class="absolute inset-0 opacity-0 cursor-pointer" onchange="console.log('native: planilla input change', this.files)">
+              <input type="file" multiple accept=".json,application/pdf" @change="handlePlanillaUpload" class="absolute inset-0 opacity-0 cursor-pointer" onchange="console.log('native: planilla input change', this.files)">
               <span class="quick-action" data-variant="upload">
                 <i class="fa-solid fa-cloud-arrow-up quick-action__icon"></i>
                 Cargar Planillas

@@ -50,6 +50,87 @@ const readFileAsJSON = (file) => new Promise((resolve, reject) => {
   reader.readAsText(file);
 });
 
+const getPdfLib = () => {
+  if (typeof window === 'undefined' || !window.pdfjsLib) {
+    throw new Error('La librería PDF.js no está disponible.');
+  }
+  if (window.pdfjsLib?.GlobalWorkerOptions && !window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  return window.pdfjsLib;
+};
+
+const extractTextFromPDF = async (file) => {
+  const pdfjsLib = getPdfLib();
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+    const strings = content.items.map((item) => item.str);
+    fullText += `${strings.join(' ')}\n`;
+  }
+  return fullText;
+};
+
+const extractCodigoRows = (text) => {
+  const rows = [];
+  const regex = /(\d{5})\s+([\d\.\,]+)\s+\$?\s*([\d\.\,]+)\s+\$?\s*([\d\.\,]+)\s+\$?\s*([\d\.\,]+)/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    rows.push({
+      codigo: match[1],
+      valorNominalRaw: match[2],
+      cuota1_7Raw: match[3],
+      cuota8AdelanteRaw: match[4],
+      derechoIngresoRaw: match[5]
+    });
+  }
+  return rows;
+};
+
+const extractDescripcionRows = (text) => {
+  const upper = text;
+  const sectionMatch = upper.match(/Descripción\s+Suscripción([\s\S]+)/i);
+  if (!sectionMatch) return [];
+  const section = sectionMatch[1];
+  const rows = [];
+  const regex = /([A-ZÁÉÍÓÚÜÑ0-9 ]+?)\s+\$([\d\.\,]+)/g;
+  let match;
+  while ((match = regex.exec(section)) !== null) {
+    const descripcion = match[1].trim();
+    if (!descripcion) continue;
+    rows.push({
+      descripcion,
+      suscripcionRaw: match[2]
+    });
+  }
+  return rows;
+};
+
+const buildItemsFromPdfText = (text) => {
+  const normalized = text.replace(/\r/g, '');
+  const codigoRows = extractCodigoRows(normalized);
+  const descripcionRows = extractDescripcionRows(normalized);
+  const len = Math.max(codigoRows.length, descripcionRows.length);
+  const items = [];
+  for (let i = 0; i < len; i += 1) {
+    const c = codigoRows[i] || {};
+    const d = descripcionRows[i] || {};
+    items.push({
+      codigo: c.codigo || null,
+      descripcion: d.descripcion || null,
+      valorNominal: toNumber(c.valorNominalRaw),
+      suscripcion: toNumber(d.suscripcionRaw),
+      cuota1_7: toNumber(c.cuota1_7Raw),
+      cuota_8_adelante: toNumber(c.cuota8AdelanteRaw),
+      derechoIngreso: toNumber(c.derechoIngresoRaw)
+    });
+  }
+  return items;
+};
+
 const resolveRowValue = (row, keys) => {
   if (!row) return undefined;
   // row can be an object with named properties or an array-like object
@@ -115,6 +196,34 @@ const ensureCategoria = (categorias, catId, nombre) => {
 
 const normalizeCategoriaId = (filename) => filename.toLowerCase().replace(/\.json$/i, '');
 
+const normalizeCategoriaIdFromPdf = (filename) => filename.toLowerCase().replace(/\.pdf$/i, '');
+
+const importPdfPlanilla = async (file, catId, productos, generateId) => {
+  const text = await extractTextFromPDF(file);
+  const items = buildItemsFromPdfText(text);
+  let added = 0;
+
+  items.forEach((item) => {
+    if (!item) return;
+    const codigo = item.codigo;
+    if (!isCodigoRow(codigo)) return;
+    productos.push({
+      id: generateId(),
+      categoriaId: catId,
+      codigo,
+      nombre: (item.descripcion || '').trim(),
+      valorNominal: toNumber(item.valorNominal),
+      suscripcion: toNumber(item.suscripcion),
+      cuota17: toNumber(item.cuota1_7),
+      cuota8mas: toNumber(item.cuota_8_adelante),
+      derechoIngreso: toNumber(item.derechoIngreso)
+    });
+    added += 1;
+  });
+
+  return added;
+};
+
 const toPlainSettings = (settings) => {
   try {
     return JSON.parse(JSON.stringify(settings));
@@ -140,37 +249,50 @@ export const createDataHandlers = ({ categorias, productos, generateId, getSetti
     let imported = 0;
     let totalAdded = 0;
 
+    const isPdfFile = (file) => file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name));
+
     for (const file of files) {
       console.log('Procesando planilla', { archivo: file.name, tamano: file.size });
       try {
-        const data = await readFileAsJSON(file);
-        // Aceptar arrays o detectar un array dentro de un objeto (caso de formatos distintos)
-        let rows = data;
-        if (!Array.isArray(data)) {
-          // Prefer explicit keys like 'rows' o 'data', si existen
-          if (Array.isArray(data.rows)) {
-            rows = data.rows;
-          } else if (Array.isArray(data.data)) {
-            rows = data.data;
-          } else {
-            // Buscar el primer valor que sea un array
-            const candidate = Object.values(data).find((v) => Array.isArray(v));
-            if (candidate && Array.isArray(candidate)) {
-              rows = candidate;
+        if (isPdfFile(file)) {
+          const baseName = file.name.replace(/\.pdf$/i, '');
+          const catId = normalizeCategoriaIdFromPdf(file.name);
+          ensureCategoria(categorias, catId, baseName);
+          console.log('Categoría verificada (PDF)', { id: catId, nombre: baseName });
+          const added = await importPdfPlanilla(file, catId, productos, generateId);
+          console.log('Filas procesadas (PDF)', { archivo: file.name, productosAgregados: added });
+          totalAdded += added;
+          imported += 1;
+        } else {
+          const data = await readFileAsJSON(file);
+          // Aceptar arrays o detectar un array dentro de un objeto (caso de formatos distintos)
+          let rows = data;
+          if (!Array.isArray(data)) {
+            // Prefer explicit keys like 'rows' o 'data', si existen
+            if (Array.isArray(data.rows)) {
+              rows = data.rows;
+            } else if (Array.isArray(data.data)) {
+              rows = data.data;
+            } else {
+              // Buscar el primer valor que sea un array
+              const candidate = Object.values(data).find((v) => Array.isArray(v));
+              if (candidate && Array.isArray(candidate)) {
+                rows = candidate;
+              }
             }
           }
+          if (!Array.isArray(rows)) {
+            throw new Error('JSON inválido: no contiene un array de filas.');
+          }
+          const baseName = file.name.replace(/\.json$/i, '');
+          const catId = normalizeCategoriaId(file.name);
+          ensureCategoria(categorias, catId, baseName);
+          console.log('Categoría verificada', { id: catId, nombre: baseName });
+          const added = parsePlanillaRows(rows, catId, productos, generateId);
+          console.log('Filas procesadas', { archivo: file.name, productosAgregados: added });
+          totalAdded += added;
+          imported += 1;
         }
-        if (!Array.isArray(rows)) {
-          throw new Error('JSON inválido: no contiene un array de filas.');
-        }
-        const baseName = file.name.replace(/\.json$/i, '');
-        const catId = normalizeCategoriaId(file.name);
-        ensureCategoria(categorias, catId, baseName);
-        console.log('Categoría verificada', { id: catId, nombre: baseName });
-        const added = parsePlanillaRows(rows, catId, productos, generateId);
-        console.log('Filas procesadas', { archivo: file.name, productosAgregados: added });
-        totalAdded += added;
-        imported += 1;
       } catch (error) {
         console.error('Error procesando planilla', { archivo: file.name, detalle: error });
         errors.push(`${file.name}: ${error.message || error}`);

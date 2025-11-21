@@ -175,7 +175,7 @@ createApp({
     const suggestionsMargen = ref([]);
 
     const focused = ref(null);
-    const sortKey = ref('cod');
+    const sortKey = ref(null);
     const sortDir = ref(1);
 
     const pagoMonto = ref(null);
@@ -472,46 +472,6 @@ createApp({
 
     const catNombre = (id) => categorias.find((categoria) => categoria.id === id)?.nombre || '';
 
-    const CATEGORY_COLORS = Object.freeze([
-      '#eef2ff',
-      '#ecfeff',
-      '#fef3c7',
-      '#fef2f2',
-      '#f0fdf4',
-      '#e0f2fe',
-      '#ede9fe',
-      '#fff7ed'
-    ]);
-
-    const categoryColorMap = computed(() => {
-      const map = new Map();
-      categorias.forEach((categoria, index) => {
-        const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
-        map.set(categoria.id, color);
-      });
-      return map;
-    });
-
-    const sheetRowStyle = (categoriaId) => {
-      const color = categoryColorMap.value.get(categoriaId) || '#f8fafc';
-      return { backgroundColor: color };
-    };
-
-    const sheetBadgeStyle = (categoriaId) => {
-      const color = categoryColorMap.value.get(categoriaId) || '#e5e7eb';
-      return { backgroundColor: color, borderColor: color };
-    };
-
-    const compareByCodeAndName = (a, b) => {
-      const codeA = String(a.codigo ?? '').trim();
-      const codeB = String(b.codigo ?? '').trim();
-      const codeCompare = codeA.localeCompare(codeB, undefined, { numeric: true, sensitivity: 'base' });
-      if (codeCompare !== 0) {
-        return codeCompare;
-      }
-      return String(a.nombre ?? '').localeCompare(String(b.nombre ?? ''), 'es', { sensitivity: 'base' });
-    };
-
     const productosFiltrados = computed(() =>
       productos.filter((producto) => {
         if (filtroCat.value !== 'todos' && producto.categoriaId !== filtroCat.value) {
@@ -534,16 +494,10 @@ createApp({
       })
     );
 
-    const planillaProductos = computed(() => {
-      const listado = [...productosFiltrados.value];
-      listado.sort(compareByCodeAndName);
-      return listado;
-    });
-
     const productosOrdenados = computed(() => {
       const listado = [...productosFiltrados.value];
       if (!sortKey.value) {
-        return listado.sort(compareByCodeAndName);
+        return listado;
       }
       const valueOf = (producto, key) => {
         if (key === 'cat') {
@@ -583,9 +537,6 @@ createApp({
         }
         if (typeof valueA === 'number' && typeof valueB === 'number') {
           return sortDir.value * (valueA - valueB);
-        }
-        if (sortKey.value === 'cod') {
-          return sortDir.value * compareByCodeAndName(a, b);
         }
         return sortDir.value * String(valueA).localeCompare(String(valueB));
       });
@@ -891,44 +842,6 @@ createApp({
       } else {
         sortKey.value = key;
         sortDir.value = 1;
-      }
-    };
-
-    const focusSheetCell = (productoId, column) => {
-      nextTick(() => {
-        const selector = `[data-sheet-row="${productoId}"][data-sheet-col="${column}"]`;
-        const element = document.querySelector(selector);
-        if (element) {
-          element.focus();
-          if (typeof element.select === 'function') {
-            element.select();
-          }
-        }
-      });
-    };
-
-    const handleSheetKeydown = (event, productoId, column) => {
-      if (!modoEdicion.value) {
-        return;
-      }
-      if (!['Enter', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
-        return;
-      }
-      event.preventDefault();
-      const listado = planillaProductos.value;
-      const currentIndex = listado.findIndex((producto) => producto.id === productoId);
-      if (currentIndex === -1) {
-        return;
-      }
-      let targetIndex = currentIndex;
-      if (event.key === 'Enter' || event.key === 'ArrowDown') {
-        targetIndex = Math.min(listado.length - 1, currentIndex + 1);
-      } else if (event.key === 'ArrowUp') {
-        targetIndex = Math.max(0, currentIndex - 1);
-      }
-      const target = listado[targetIndex];
-      if (target) {
-        focusSheetCell(target.id, column);
       }
     };
 
@@ -1271,12 +1184,9 @@ createApp({
       assistantNewCategory,
       selectedProd,
       productosOrdenados,
-      planillaProductos,
       fmt,
       fmtMoneyFixed,
       catNombre,
-      sheetRowStyle,
-      sheetBadgeStyle,
       changeFont,
       handlePlanillaUpload,
       handleBaseUpload,
@@ -1299,8 +1209,6 @@ createApp({
       sort,
       sortKey,
       sortDir,
-      handleSheetKeydown,
-      focusSheetCell,
       pagoMontoText,
       pagoTipo,
       pagoMargenText,
